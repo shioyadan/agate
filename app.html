@@ -56,9 +56,9 @@
             
             <div class="collapse navbar-collapse" id="id_app_navbar">
                 <!-- "navbar-right" alignes items to the right side-->
-                <ul class="nav navbar-nav navbar-right">
+                <ul class="nav navbar-nav navbar-left">
                     <li>
-                        <a href="#home" onclick={closeDropDown}>
+                        <a href="#home" onclick={onOpenFolder}>
                             <span class="glyphicon glyphicon-folder-open"></span> 
                             フォルダを開く
                         </a>
@@ -92,6 +92,7 @@
 
         // "Open folder" is clicked
         self.onOpenFolder = function(e) {
+            self.app.openFolder();
             self.closeDropDown();   // Close the list after click
         }
 
@@ -116,6 +117,7 @@
 
 
     <script>
+
         var self = this;
 
         // アプリケーションのコンテキスト
@@ -147,16 +149,24 @@
 
         // フォルダのオープン
         app.openFolder = function(path){
+            context = {
+                count: 0
+            };
 
+            var yosegi = require("electron").remote.require("./yosegi");
+            yosegi.getFileList(
+                //"C:\\",
+                "./", 
+                function(files) {
+                    self.app.modalDialog("test", files, "OK");
+                }
+            );
         };
 
 
         // エントリポイント
         // マウント時に初期化を行う
         self.on("mount", function() {
-            riot.mount("div#sheet", "sheet_home", {"app": app});
-            self.update();
-
             // 初期化
             app.init(function() {
             });
@@ -165,14 +175,5 @@
 
     </script>
 </app>
-
-
-<!-- ホーム画面 -->
-<sheet_home>
-    <script>
-        var self = this;
-        self.app = opts.app;
-    </script>
-</sheet_home>
 
 

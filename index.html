@@ -18,18 +18,21 @@
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     -->
-    <script>
+    <script type="text/javascript">
       // Electron の仕様で jquery が正しくロードされないので，その対策
       // https://github.com/electron/electron/issues/254
       window.jQuery = window.$ = require("./lib/jquery.js");
     </script>
-    <script src="./lib/bootstrap.js"></script>    
+    <script src="./lib/bootstrap.js" type="text/javascript"></script>    
 
     <!-- bootstrap の CSS 
     <link href="css/bootstrap.flatly.min.css" rel="stylesheet">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
     -->
     <link href="./css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- File IO -->
+    <script src="./yosegi.js" type="text/javascript"></script>
 </head>
 
 
