@@ -1,19 +1,22 @@
 
-<!-- 通知用のダイアログ -->
+<!-- Notification dialog -->
 <app_dialog>
     <div id="id_app_dialog" class="modal fade">
         <div class="modal-dialog modal-content">
+
             <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-                <i class="glyphicon glyphicon-remove"></i>
-            </button>
-            <h4 class="modal-title">
-                {opts.title}
-            </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    <i class="glyphicon glyphicon-remove"></i>
+                </button>
+                <h4 class="modal-title">
+                    {opts.title}
+                </h4>
             </div>
+            
             <div class="modal-body">
                 {opts.msg}
             </div>
+
             <div class="modal-footer">
                 <button class="btn btn-default" data-dismiss="modal">
                     {opts.button}
@@ -35,9 +38,7 @@
 </app_dialog>
 
 
-<!-- 画面上部のメニュー 
-a タグから URL を更新してモードを切り替える．
--->
+<!-- The navigation ber at the top of the window -->
 <app_navbar>
     <nav class="navbar navbar-default">
         <div class="container-fluid">
@@ -54,7 +55,7 @@ a タグから URL を更新してモードを切り替える．
             </div>
             
             <div class="collapse navbar-collapse" id="id_app_navbar">
-                <!-- navbar-right でホームと設定を右寄せに -->
+                <!-- "navbar-right" alignes items to the right side-->
                 <ul class="nav navbar-nav navbar-right">
                     <li>
                         <a href="#home" onclick={closeDropDown}>
@@ -80,18 +81,18 @@ a タグから URL を更新してモードを切り替える．
         var self = this;
         self.app = opts.app;
 
-        // 更新
+        // Update handler
         self.on('update', function() {
         });
 
-        // ドロップダウンを閉じる
+        // Close the dropdown list
         self.closeDropDown = function(e) {
             $("div#id_app_navbar").collapse("hide");
         }
 
-        // フォルダを開くのクリック時
+        // "Open folder" is clicked
         self.onOpenFolder = function(e) {
-            self.closeDropDown();   // クリック後は閉じておく
+            self.closeDropDown();   // Close the list after click
         }
 
 
@@ -99,21 +100,18 @@ a タグから URL を更新してモードを切り替える．
 </app_navbar>
 
 
-<!-- アプリケーション -->
+<!-- Application -->
 <app>
 
-    <!-- 上部のメニュー 
-    script が走った後にインスタンシエイトが行われるので
-    app に参照できる．
-    -->
+    <!-- Navigation ber -->
     <app_navbar app={app}></app_navbar>
 
-    <!-- シートのマウントポイント 
-    中身のタグが動的に入れ替わるので，div にしている．
-    -->
+    <!-- The mount point for a main sheet -->
     <div id="sheet"></div>
 
-    <!-- エラーとかの通知用ダイアログ．普段は見えない -->
+    <!-- Notification dialog
+        This dialog is not visible in usual.
+     -->
     <app_dialog app={app}></app_dialog>
 
 
