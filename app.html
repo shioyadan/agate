@@ -1,0 +1,180 @@
+
+<!-- 通知用のダイアログ -->
+<app_dialog>
+    <div id="id_app_dialog" class="modal fade">
+        <div class="modal-dialog modal-content">
+            <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                <i class="glyphicon glyphicon-remove"></i>
+            </button>
+            <h4 class="modal-title">
+                {opts.title}
+            </h4>
+            </div>
+            <div class="modal-body">
+                {opts.msg}
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal">
+                    {opts.button}
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        var self = this;
+        self.app = opts.app;
+        self.modal = function(title, msg, button) {
+            self.opts.title = title;
+            self.opts.msg = msg;
+            self.opts.button = button;
+            self.update();
+            $('div#id_app_dialog').modal();
+        }
+    </script>
+</app_dialog>
+
+
+<!-- 画面上部のメニュー 
+a タグから URL を更新してモードを切り替える．
+-->
+<app_navbar>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+
+            <div class="navbar-header">
+                <div class="navbar-brand">
+                    {app.navTitle}
+                </div>
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#id_app_navbar">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span> 
+                </button>
+            </div>
+            
+            <div class="collapse navbar-collapse" id="id_app_navbar">
+                <!-- navbar-right でホームと設定を右寄せに -->
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="#home" onclick={closeDropDown}>
+                            <span class="glyphicon glyphicon-folder-open"></span> 
+                            フォルダを開く
+                        </a>
+                    </li>
+                    <!--
+                    <li>
+                        <a href="" onclick={closeDropDown}>
+                            <span class="glyphicon glyphicon-cog"></span>
+                            設定
+                        </a>
+                    </li>
+                    -->
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+
+    <script>
+        var self = this;
+        self.app = opts.app;
+
+        // 更新
+        self.on('update', function() {
+        });
+
+        // ドロップダウンを閉じる
+        self.closeDropDown = function(e) {
+            $("div#id_app_navbar").collapse("hide");
+        }
+
+        // フォルダを開くのクリック時
+        self.onOpenFolder = function(e) {
+            self.closeDropDown();   // クリック後は閉じておく
+        }
+
+
+    </script>
+</app_navbar>
+
+
+<!-- アプリケーション -->
+<app>
+
+    <!-- 上部のメニュー 
+    script が走った後にインスタンシエイトが行われるので
+    app に参照できる．
+    -->
+    <app_navbar app={app}></app_navbar>
+
+    <!-- シートのマウントポイント 
+    中身のタグが動的に入れ替わるので，div にしている．
+    -->
+    <div id="sheet"></div>
+
+    <!-- エラーとかの通知用ダイアログ．普段は見えない -->
+    <app_dialog app={app}></app_dialog>
+
+
+    <script>
+        var self = this;
+
+        // アプリケーションのコンテキスト
+        var app = {
+            mode: "tome",           // 現在のアプリのモード
+
+            navTitle: "", // ナビゲーションに設定するタイトル
+        };
+        self.app = app;
+
+        // ダイアログを表示
+        app.modalDialog = function(title, msg, button) {
+            self.tags.app_dialog.modal(title, msg, button);
+        };
+        app.modalError = function(msg) {
+            app.modalDialog("エラーです (´・ω・`)", msg, "まいったねこりゃ");
+        };
+
+        // 初期化
+        // タグのマウント時に呼ばれるようにする
+        app.init = function(callback) {
+        };
+
+        // ナビゲーションに設定するタイトルの変更
+        app.setNavTitle = function(title) {
+            // navbar の中でこれを見て勝手に反映してくれる
+            app.navTitle = title;
+        };
+
+        // フォルダのオープン
+        app.openFolder = function(path){
+
+        };
+
+
+        // エントリポイント
+        // マウント時に初期化を行う
+        self.on("mount", function() {
+            riot.mount("div#sheet", "sheet_home", {"app": app});
+            self.update();
+
+            // 初期化
+            app.init(function() {
+            });
+        });
+
+
+    </script>
+</app>
+
+
+<!-- ホーム画面 -->
+<sheet_home>
+    <script>
+        var self = this;
+        self.app = opts.app;
+    </script>
+</sheet_home>
+
+

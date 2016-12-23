@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+
+<head>
+    <!-- これを書いておくと，スマホの時なんかにサイズを良きに計らってくれる -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- riot.js と riot-router
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/riot/3.0.4/riot+compiler.js"></script>
+      <script src="https://cdn.jsdelivr.net/riot-route/3.0.2/route.min.js"></script>
+    -->
+    <script src="./lib/riot+compiler.js" type="text/javascript"></script>
+    <script src="./lib/route.js" type="text/javascript"></script>
+
+    <!-- jquery と bootstrap 
+      bootstrap が jquery に依存している．
+      jquery の機能はなるべく使わないようにしている．
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    -->
+    <script src="./lib/jquery.js"></script>
+    <script src="./lib/bootstrap.js"></script>    
+
+    <!-- bootstrap の CSS 
+    <link href="css/bootstrap.flatly.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+
+<body>
+
+    <!-- タグの定義 -->
+    <script type="riot/tag" src="app.html"></script>
+
+    <!-- アプリケーションのプレースホルダ 
+    app.html 内で定義されたカスタムタグが
+    <app> の下に動的にマウントされる．
+    -->
+    <app></app>
+
+    <!-- マウントの実行 -->
+    <script>
+        riot.mount('app');
+    </script>
+
+</body>
+
+</html>

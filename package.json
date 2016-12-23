@@ -1,0 +1,13 @@
+{
+  "name": "yosegi",
+  "version": "0.0.0",
+  "description": "Yosegi ",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ryota Shioya",
+  "license": "ISC",
+  "devDependencies": {
+  }
+}
