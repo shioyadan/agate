@@ -232,8 +232,9 @@
                 var height = canvas.height;
 
                 function CalcArea(rectTree, areas, left, top, right, bottom, horizontal) {
+                    var width = right - left;
+                    var height = bottom - top;
                     if (horizontal) {
-                        var width = right - left;
                         var leftWidth = width * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
                         var rightWidth = width * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
 
@@ -241,18 +242,18 @@
                             areas.push([left, top, left + leftWidth, bottom]);
                         }
                         else{
-                            CalcArea(rectTree.leftNode, areas, left, top, left + leftWidth, bottom, !horizontal);
+                            CalcArea(
+                                rectTree.leftNode, areas, left, top, left + leftWidth, bottom, leftWidth > height);
                         }
 
                         if (rectTree.right.length == 1) {
                             areas.push([left + leftWidth, top, right, bottom]);
                         }
                         else{
-                            CalcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, !horizontal);
+                            CalcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, rightWidth > height);
                         }
                     }
                     else {
-                        var height = bottom - top;
                         var firstHeight = height * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
                         var secondHeight = height * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
 
@@ -260,14 +261,14 @@
                             areas.push([left, top, right, top + firstHeight]);
                         }
                         else{
-                            CalcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, !horizontal);
+                            CalcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, width > firstHeight);
                         }
 
                         if (rectTree.right.length == 1) {
                             areas.push([left, top + firstHeight, right, bottom]);
                         }
                         else{
-                            CalcArea(rectTree.rightNode, areas, top + firstHeight, right, bottom, !horizontal);
+                            CalcArea(rectTree.rightNode, areas, top + firstHeight, right, bottom, width > secondHeight);
                         }
 
                     }
