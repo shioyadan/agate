@@ -9,5 +9,9 @@
   "author": "Ryota Shioya",
   "license": "ISC",
   "devDependencies": {
+    "jQuery": "^3.1.1",
+    "bootstrap": "^3.3.7",
+    "riot": "^3.0.4",
+    "riot-route": "^3.0.2"
   }
 }
