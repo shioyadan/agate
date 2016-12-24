@@ -72,14 +72,10 @@ var yosegi = {
 
                     context.count++;
                     context.searching -= 1;
-                    /*
+
                     if (context.count % (1024*16) == 0) {
                         console.log("" + context.count + "," + context.searchingDir);
                     }
-                    if (context.count > 2142208) {
-                        console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
-                    }
-                    */
                     
                     if (context.searching == 0 && context.searchingDir == 0) {
                         context.finish = false;

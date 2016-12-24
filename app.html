@@ -159,9 +159,9 @@
                 //var yosegi = require("electron").remote.require("./yosegi");
                 var yosegi = require("./yosegi");
                 yosegi.getFileTree(
-                    //"C:\\",
+                    "C:\\",
                     //"./", 
-                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, treeJSON) {
                         self.app.navTitle = context.count;
                         self.app.calcRects(JSON.parse(treeJSON));
@@ -291,7 +291,7 @@
                             });
                         }
                         else{
-                            CalcArea(rectTree.rightNode, areas, top + firstHeight, right, bottom, width > secondHeight);
+                            CalcArea(rectTree.rightNode, areas, left, top + firstHeight, right, bottom, width > secondHeight);
                         }
 
                     }
@@ -308,12 +308,12 @@
                     c.strokeStyle = "rgb(100, 100, 100)";
                     c.strokeRect(pos[0], pos[1], pos[2], pos[3]);
 
-                    c.font= 'bold 40px Century Gothic';
+                    c.font= 'bold 20px Century Gothic';
                     c.strokeStyle = '#00A3D9';
                     c.lineWidth = 6; 
                     c.lineJoin = 'round';
                     c.fillStyle = '#fff';
-                    c.fillText(areas[i].key, pos[0] + 10, pos[1] + 40 + 5);
+                    c.fillText(areas[i].key, pos[0] + 10, pos[1] + 20 + 5);
                 }
 
 
