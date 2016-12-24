@@ -1,7 +1,7 @@
 
 <!-- Notification dialog -->
 <app_dialog>
-    <div id="id_app_dialog" class="modal fade">
+    <div ref="top_div" class="modal fade">
         <div class="modal-dialog modal-content">
 
             <div class="modal-header">
@@ -32,7 +32,10 @@
             self.opts.msg = msg;
             self.opts.button = button;
             self.update();
-            $('div#id_app_dialog').modal();
+            $(self.refs["top_div"]).modal();
+        };
+        self.modal_message = function(msg) {
+            self.modal("おしらせ", msg, "おｋ");
         }
     </script>
 </app_dialog>
@@ -105,10 +108,11 @@
 <app>
 
     <!-- Navigation ber -->
-    <app_navbar app={app}></app_navbar>
+    <app_navbar app={app}>  <!-- app を渡している -->
+    </app_navbar>
 
-    <!-- The mount point for a main sheet -->
-    <div id="sheet"></div>
+    <!-- -->
+    <canvas ref="canvas"></canvas>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -125,17 +129,17 @@
             navTitle: "",   // ナビゲーションに設定するタイトル
 
             // ダイアログを表示
-            modalDialog: function(title, msg, button) {
-                self.tags.app_dialog.modal(title, msg, button);
+            modalDialog: function(msg) {
+                self.tags.app_dialog.modal_message(msg);
 
-            },
-            modalError: function(msg) {
-                app.modalDialog("エラーです (´・ω・`)", msg, "まいったねこりゃ");
             },
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function(callback) {
+
+                var canvas = self.refs.canvas;
+                canvas = canvas;
             },
 
             // ナビゲーションに設定するタイトルの変更
@@ -151,7 +155,7 @@
                 };
 
                 //var yosegi = require("electron").remote.require("./yosegi");
-                var yosegi = require("yosegi");
+                var yosegi = require("./yosegi");
                 yosegi.getFileList(
                     //"C:\\",
                     //"./", 
@@ -168,17 +172,14 @@
             //　描画
             draw: function() {
             }
+
         };
         self.app = app;
 
 
         // エントリポイント
         // マウント時に初期化を行う
-        self.on("mount", function() {
-            // 初期化
-            app.init(function() {
-            });
-        });
+        self.on("mount", app.init);
 
     </script>
 </app>
