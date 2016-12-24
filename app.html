@@ -116,8 +116,10 @@
     </app_navbar>
 
     <!-- -->
-    <canvas ref="canvas" class="main">
-    </canvas>
+    <div style="width:100%; height:100%;" ref="canvas_holder">
+        <canvas ref="canvas">
+        </canvas>
+    </div>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -137,13 +139,6 @@
             modalDialog: function(msg) {
                 self.tags.app_dialog.modal_message(msg);
 
-            },
-
-            // 初期化
-            // タグのマウント時に呼ばれるようにする
-            init: function(callback) {
-                var canvas = self.refs.canvas;
-                canvas = canvas;
             },
 
             // ナビゲーションに設定するタイトルの変更
@@ -177,9 +172,38 @@
             draw: function() {
                 var h = self.refs.app_navbar.getHeight();
                 var v = h;
-            }
 
+                var ctx = self.refs.canvas.getContext('2d');
+                ctx.beginPath();
+                ctx.moveTo(20, 20);
+                ctx.lineTo(120, 20);
+                ctx.lineTo(120, 120);
+                ctx.lineTo(20, 120);
+                ctx.closePath();
+                ctx.stroke();            
+            },
+
+            // リサイズハンドラ
+            onResize: function() {
+                // CSS で指定するとぼける
+                // キャンバスのサイズを無理矢理変更する必要がある
+                var canvas = self.refs.canvas;
+                var canvas_holder = self.refs.canvas_holder;
+                canvas.width = canvas_holder.offsetWidth;
+                canvas.height = canvas_holder.offsetHeight;
+                app.draw();
+            },
+
+
+            // 初期化
+            // タグのマウント時に呼ばれるようにする
+            init: function(callback) {
+                // ウィンドウのリサイズハンドラ
+                window.addEventListener("resize", app.onResize, false);
+            },
         };
+
+        // self にいれておく
         self.app = app;
 
 

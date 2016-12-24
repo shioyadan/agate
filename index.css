@@ -4,9 +4,3 @@ html, body {
   margin: 0;        /* すきまなく */
   overflow: hidden; /* はみ出た部分は表示されない */
 }
-
-/* メインのキャンバス */
-canvas.main {
-  width: 100%;      /* 全体に*/
-  height: 100%;
-}
