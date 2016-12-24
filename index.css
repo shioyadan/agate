@@ -1,0 +1,12 @@
+html, body {
+  width: 100%;      /* ウィンドウ全体に*/
+  height: 100%;
+  margin: 0;        /* すきまなく */
+  overflow: hidden; /* はみ出た部分は表示されない */
+}
+
+/* メインのキャンバス */
+canvas.main {
+  width: 100%;      /* 全体に*/
+  height: 100%;
+}

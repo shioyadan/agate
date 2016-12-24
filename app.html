@@ -116,9 +116,8 @@
     </app_navbar>
 
     <!-- -->
-    <div style="height: 100%;">
-        <canvas ref="canvas"></canvas>
-    </div>
+    <canvas ref="canvas" class="main">
+    </canvas>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -143,7 +142,6 @@
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function(callback) {
-
                 var canvas = self.refs.canvas;
                 canvas = canvas;
             },
