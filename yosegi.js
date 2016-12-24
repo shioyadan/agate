@@ -1,33 +1,43 @@
-/*
-var electron = require("electron");  // Module to control application life.
-var remote = electron.remote;
-var fs = remote.require("fs");
-*/
-var fs = require("fs");
-
 var yosegi = {};
 
-// 
+// レンダラで実行
 yosegi.getFileList = function(path, callback) {
     var context = {
-        searching: 0,
         count: 0,
         callback: callback,
-        tree: {}
+        tree: {},
+        finish: false,
+        searching: 0,
+        searchingDir: 1,
     };
-    yosegi.getFileListBody(path, context, context.tree);
+
+    var remote = require("electron").remote.require("./yosegi");
+    //var yosegi = require("./yosegi");
+    
+    remote.getFileListBody(path, context, context.tree);
 }
 
+// リモートで実行
 yosegi.getFileListBody = function(path, context, parent) {
+    //var fs = require("electron").remote.require("fs");
+    var fs = require("fs");
+
     fs.readdir(path, function(err, files) {
+        if (err) {
+            //console.log(err);
+            return;
+        }
+        
         context.searching += files.length;
+        context.searchingDir -= 1;
 
         files.forEach(function(val, i) {
             var filePath = path + "/" + val;
+
             fs.stat(filePath, function(err, stat) {
 
                 if (err) {
-                    //
+                    //console.log(err);
                 }
                 else{
                     // ファイル情報ノード作成
@@ -40,14 +50,15 @@ yosegi.getFileListBody = function(path, context, parent) {
 
                     if (stat.isDirectory()) {
                         node.children = {};
-                        yosegi.getFileListBody(filePath, context, node.children)
+                        context.searchingDir++;
+                        yosegi.getFileListBody(filePath, context, node.children);
                     }
                 }
 
                 context.count++;
                 context.searching -= 1;
-                if (context.searching == 0) {
-                    context.callback(context.tree);
+                if (context.searching == 0 && context.searchingDir == 0) {
+                    context.callback(context);
                 }
             });
         });

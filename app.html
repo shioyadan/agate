@@ -117,61 +117,73 @@
 
 
     <script>
+    var self = this;
 
-        var self = this;
+    // アプリケーションのコンテキスト
+    var app = {
+        mode: "tome",           // 現在のアプリのモード
 
-        // アプリケーションのコンテキスト
-        var app = {
-            mode: "tome",           // 現在のアプリのモード
+        navTitle: "", // ナビゲーションに設定するタイトル
 
-            navTitle: "", // ナビゲーションに設定するタイトル
+
+    };
+    self.app = app;
+
+    // ダイアログを表示
+    app.modalDialog = function(title, msg, button) {
+        self.tags.app_dialog.modal(title, msg, button);
+
+    }
+    app.modalError = function(msg) {
+        app.modalDialog("エラーです (´・ω・`)", msg, "まいったねこりゃ");
+    };
+
+    
+
+    // 初期化
+    // タグのマウント時に呼ばれるようにする
+    app.init = function(callback) {
+    };
+
+    // ナビゲーションに設定するタイトルの変更
+    app.setNavTitle = function(title) {
+        // navbar の中でこれを見て勝手に反映してくれる
+        app.navTitle = title;
+    };
+
+    // フォルダのオープン
+    app.openFolder = function(path){
+        context = {
+            count: 0
         };
-        self.app = app;
 
-        // ダイアログを表示
-        app.modalDialog = function(title, msg, button) {
-            self.tags.app_dialog.modal(title, msg, button);
-        };
-        app.modalError = function(msg) {
-            app.modalDialog("エラーです (´・ω・`)", msg, "まいったねこりゃ");
-        };
+        //var yosegi = require("electron").remote.require("./yosegi");
+        var yosegi = require("./yosegi");
+        yosegi.getFileList(
+            //"C:\\",
+            //"./", 
+            "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+            function(context) {
+                self.app.navTitle = context.count;
+                self.update();
+                self.app.draw();
+            }
+        );
+    };
 
+    //　描画
+    app.draw = function() {
+
+    }
+
+
+    // エントリポイント
+    // マウント時に初期化を行う
+    self.on("mount", function() {
         // 初期化
-        // タグのマウント時に呼ばれるようにする
-        app.init = function(callback) {
-        };
-
-        // ナビゲーションに設定するタイトルの変更
-        app.setNavTitle = function(title) {
-            // navbar の中でこれを見て勝手に反映してくれる
-            app.navTitle = title;
-        };
-
-        // フォルダのオープン
-        app.openFolder = function(path){
-            context = {
-                count: 0
-            };
-
-            var yosegi = require("electron").remote.require("./yosegi");
-            yosegi.getFileList(
-                //"C:\\",
-                "./", 
-                function(files) {
-                    self.app.modalDialog("test", files, "OK");
-                }
-            );
-        };
-
-
-        // エントリポイント
-        // マウント時に初期化を行う
-        self.on("mount", function() {
-            // 初期化
-            app.init(function() {
-            });
+        app.init(function() {
         });
-
+    });
 
     </script>
 </app>
