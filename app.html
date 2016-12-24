@@ -134,7 +134,9 @@
         var app = {
             mode: "tome",   // 現在のアプリのモード
             navTitle: "",   // ナビゲーションに設定するタイトル
-            rectTree: null,      // 描画対象のツリー
+
+            tree: null,      // 描画対象
+            rectTree: null,      // 描画対象
 
             // ダイアログを表示
             modalDialog: function(msg) {
@@ -157,9 +159,9 @@
                 //var yosegi = require("electron").remote.require("./yosegi");
                 var yosegi = require("./yosegi");
                 yosegi.getFileList(
-                    "C:\\",
+                    //"C:\\",
                     //"./", 
-                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, treeJSON) {
                         self.app.navTitle = context.count;
                         self.app.calcRects(JSON.parse(treeJSON));
@@ -178,7 +180,7 @@
                         if (val.isDirectory && val.children) {
                             val.size = updateDirectorySize(val.children);
                         }
-                        size += val.size / 1024;    // KB に
+                        size += val.size;
                     }
                     return size;
                 }
@@ -227,10 +229,15 @@
                 var rectRoot = {};
                 CalcRectTree(rectRoot, keys);
                 app.rectTree = rectRoot;
+                app.tree = tree;
             },
 
             //　描画
             draw: function() {
+                if (!app.tree) {
+                    return;
+                }
+
                 var canvas = self.refs.canvas;
                 var width = canvas.width;
                 var height = canvas.height;
@@ -243,7 +250,10 @@
                         var rightWidth = width * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
 
                         if (rectTree.left.length == 1) {
-                            areas.push([left, top, left + leftWidth, bottom]);
+                            areas.push({
+                                key: rectTree.left[0],
+                                pos: [left, top, left + leftWidth, bottom]
+                            });
                         }
                         else{
                             CalcArea(
@@ -251,7 +261,10 @@
                         }
 
                         if (rectTree.right.length == 1) {
-                            areas.push([left + leftWidth, top, right, bottom]);
+                            areas.push({
+                                key: rectTree.right[0],
+                                pos: [left + leftWidth, top, right, bottom]
+                            });
                         }
                         else{
                             CalcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, rightWidth > height);
@@ -262,14 +275,20 @@
                         var secondHeight = height * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
 
                         if (rectTree.left.length == 1) {
-                            areas.push([left, top, right, top + firstHeight]);
+                            areas.push({
+                                key: rectTree.left[0],
+                                pos: [left, top, right, top + firstHeight]
+                            });
                         }
                         else{
                             CalcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, width > firstHeight);
                         }
 
                         if (rectTree.right.length == 1) {
-                            areas.push([left, top + firstHeight, right, bottom]);
+                            areas.push({
+                                key: rectTree.right[0],
+                                pos: [left, top + firstHeight, right, bottom]
+                            });
                         }
                         else{
                             CalcArea(rectTree.rightNode, areas, top + firstHeight, right, bottom, width > secondHeight);
@@ -278,20 +297,23 @@
                     }
                 }
                 var areas = [];
-                if (!app.rectTree) {
-                    return;
-                }
                 CalcArea(app.rectTree, areas, 0, 0, width, height, width > height);
-
 
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
-
+                    pos = areas[i].pos;
                     c.fillStyle = "rgb(200, 200, 200)";
-                    c.fillRect(areas[i][0], areas[i][1], areas[i][2], areas[i][3]);
+                    c.fillRect(pos[0], pos[1], pos[2], pos[3]);
 
                     c.strokeStyle = "rgb(100, 100, 100)";
-                    c.strokeRect(areas[i][0], areas[i][1], areas[i][2], areas[i][3]);
+                    c.strokeRect(pos[0], pos[1], pos[2], pos[3]);
+
+                    c.font= 'bold 40px Century Gothic';
+                    c.strokeStyle = '#00A3D9';
+                    c.lineWidth = 6; 
+                    c.lineJoin = 'round';
+                    c.fillStyle = '#fff';
+                    c.fillText(areas[i].key, pos[0] + 10, pos[1] + 40 + 5);
                 }
 
 
