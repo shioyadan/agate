@@ -43,7 +43,7 @@
 
 <!-- The navigation ber at the top of the window -->
 <app_navbar>
-    <nav class="navbar navbar-default">
+    <nav class="navbar navbar-default" ref="app_navbar">
         <div class="container-fluid">
 
             <div class="navbar-header">
@@ -99,6 +99,10 @@
             self.closeDropDown();   // Close the list after click
         }
 
+        // 高さを取得
+        self.getHeight = function() {
+            return self.refs["app_navbar"].offsetHeight;
+        }
 
     </script>
 </app_navbar>
@@ -108,11 +112,13 @@
 <app>
 
     <!-- Navigation ber -->
-    <app_navbar app={app}>  <!-- app を渡している -->
+    <app_navbar app={app} ref="app_navbar">  <!-- app を渡している -->
     </app_navbar>
 
     <!-- -->
-    <canvas ref="canvas"></canvas>
+    <div style="height: 100%;">
+        <canvas ref="canvas"></canvas>
+    </div>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -158,8 +164,8 @@
                 var yosegi = require("./yosegi");
                 yosegi.getFileList(
                     //"C:\\",
-                    //"./", 
-                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    "./", 
+                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context) {
                         self.app.navTitle = context.count;
                         self.update();
@@ -171,6 +177,8 @@
 
             //　描画
             draw: function() {
+                var h = self.refs.app_navbar.getHeight();
+                var v = h;
             }
 
         };
