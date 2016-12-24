@@ -68,6 +68,7 @@ var yosegi = {
                     context.searching -= 1;
                     if (context.searching == 0 && context.searchingDir == 0) {
                         context.finish = false;
+                        // Electron のリモート呼び出しは浅いコピーしかしないので
                         // JSON にシリアライズしておくる
                         context.callback(context, JSON.stringify(context.tree));
                     }

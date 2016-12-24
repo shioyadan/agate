@@ -134,6 +134,7 @@
         var app = {
             mode: "tome",   // 現在のアプリのモード
             navTitle: "",   // ナビゲーションに設定するタイトル
+            rectTree: null,      // 描画対象のツリー
 
             // ダイアログを表示
             modalDialog: function(msg) {
@@ -170,13 +171,125 @@
             // 矩形領域を計算する
             calcRects: function(tree) {
 
+                function updateDirectorySize(tree) {
+                    var size = 0;
+                    for(var key in tree) {
+                        var val = tree[key];
+                        if (val.isDirectory && val.children) {
+                            val.size = updateDirectorySize(val.children);
+                        }
+                        size += val.size;
+                    }
+                    return size;
+                }
+
+                // 各ディレクトリのサイズ反映
+                updateDirectorySize(tree);
+
+                var keys = Object.keys(tree);
+                keys.sort(function(a, b) {
+                    if (tree[a].size > tree[b].size) return -1;
+                    if (tree[a].size < tree[b].size) return 1;
+                    return 0;
+                });
+
+                function CalcRectTree(rectTree, keys) {
+
+                    rectTree.left = [];
+                    rectTree.right = [];
+                    rectTree.leftNode = {};
+                    rectTree.rightNode = {};
+                    rectTree.leftSize = 0;
+                    rectTree.rightSize = 0;
+
+                    for (var i = 0; i < keys.length; i++) {
+                        if (rectTree.leftSize < rectTree.rightSize) {
+                            rectTree.left.push(keys[i]);
+                            rectTree.leftSize += tree[keys[i]].size;
+                        }
+                        else{
+                            rectTree.right.push(keys[i]);
+                            rectTree.rightSize += tree[keys[i]].size;
+                        }
+                    }
+                    if (rectTree.left.length > 1) {
+                        CalcRectTree(rectTree.leftNode, rectTree.left);
+                    }
+                    if (rectTree.right.length > 1) {
+                        CalcRectTree(rectTree.rightNode, rectTree.right);
+                    }
+                }
+
+                var rectRoot = {};
+                CalcRectTree(rectRoot, keys);
+                app.rectTree = rectRoot;
             },
 
             //　描画
             draw: function() {
+                var canvas = self.refs.canvas;
+                var width = canvas.width;
+                var height = canvas.height;
+
+                function CalcArea(rectTree, areas, left, top, right, bottom, horizontal) {
+                    if (horizontal) {
+                        var width = right - left;
+                        var leftWidth = width * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
+                        var rightWidth = width * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
+
+                        if (rectTree.left.length == 1) {
+                            areas.push([left, top, left + leftWidth, bottom]);
+                        }
+                        else{
+                            CalcArea(rectTree.leftNode, areas, left, top, left + leftWidth, bottom, !horizontal);
+                        }
+
+                        if (rectTree.right.length == 1) {
+                            areas.push([left + leftWidth, top, right, bottom]);
+                        }
+                        else{
+                            CalcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, !horizontal);
+                        }
+                    }
+                    else {
+                        var height = bottom - top;
+                        var firstHeight = height * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
+                        var secondHeight = height * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
+
+                        if (rectTree.left.length == 1) {
+                            areas.push([left, top, right, top + firstHeight]);
+                        }
+                        else{
+                            CalcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, !horizontal);
+                        }
+
+                        if (rectTree.right.length == 1) {
+                            areas.push([left, top + firstHeight, right, bottom]);
+                        }
+                        else{
+                            CalcArea(rectTree.rightNode, areas, top + firstHeight, right, bottom, !horizontal);
+                        }
+
+                    }
+                }
+                var areas = [];
+                if (!app.rectTree) {
+                    return;
+                }
+                CalcArea(app.rectTree, areas, 0, 0, width, height, width > height);
+
+
                 var c = self.refs.canvas.getContext('2d');
-                c.fillStyle = "rgb(200, 0, 0)";
-                c.fillRect(0,0,40,40);
+                for (var i = 0; i < areas.length; i++) {
+
+                    c.fillStyle = "rgb(200, 200, 200)";
+                    c.fillRect(areas[i][0], areas[i][1], areas[i][2], areas[i][3]);
+
+                    c.strokeStyle = "rgb(100, 100, 100)";
+                    c.strokeRect(areas[i][0], areas[i][1], areas[i][2], areas[i][3]);
+                }
+
+
             },
 
             // リサイズハンドラ
@@ -199,6 +312,7 @@
 
                 //
                 app.openFolder();
+                app.onResize(); // サイズを適用するために1回呼んどく
             },
         };
 
