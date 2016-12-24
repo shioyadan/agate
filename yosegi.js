@@ -1,16 +1,18 @@
 var yosegi = {
 
-    // レンダラで実行
-    getFileList: function(path, callback) {
+    // path により指定したフォルダ以下のファイルツリーを取得
+    // render プロセスで実行
+    getFileTree: function(path, callback) {
         // main プロセスで getFileListBody を呼び出す
         var remote = require("electron").remote.require("./yosegi");
         //var yosegi = require("./yosegi");
         
-        remote.getFileListOnMain(path, callback);
+        remote.getFileTreeOnMain(path, callback);
     },
 
-    // 初回
-    getFileListOnMain: function(path, callback) {
+    // getFileTree の実装のエントリポイント
+    // main プロセスで実行
+    getFileTreeOnMain: function(path, callback) {
 
         var context = {
             count: 0,
@@ -21,11 +23,12 @@ var yosegi = {
             tree: {}
         };
 
-        yosegi.getFileListOnMainBody(path, context, context.tree);
+        yosegi.getFileTreeOnMainBody(path, context, context.tree);
     },
         
-    // リモートで実行
-    getFileListOnMainBody: function(path, context, parent) {
+    // getFileTree の実装
+    // main プロセスで実行
+    getFileTreeOnMainBody: function(path, context, parent) {
         //var fs = require("electron").remote.require("fs");
         var fs = require("fs");
 
@@ -61,7 +64,7 @@ var yosegi = {
                         if (stat.isDirectory()) {
                             node.children = {};
                             context.searchingDir++;
-                            yosegi.getFileListOnMainBody(
+                            yosegi.getFileTreeOnMainBody(
                                 filePath, context, node.children
                             );
                         }
