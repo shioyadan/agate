@@ -157,9 +157,9 @@
                 //var yosegi = require("electron").remote.require("./yosegi");
                 var yosegi = require("./yosegi");
                 yosegi.getFileList(
-                    //"C:\\",
+                    "C:\\",
                     //"./", 
-                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, treeJSON) {
                         self.app.navTitle = context.count;
                         self.app.calcRects(JSON.parse(treeJSON));
@@ -178,7 +178,7 @@
                         if (val.isDirectory && val.children) {
                             val.size = updateDirectorySize(val.children);
                         }
-                        size += val.size;
+                        size += val.size / 1024;    // KB に
                     }
                     return size;
                 }
@@ -191,6 +191,10 @@
                     if (tree[a].size > tree[b].size) return -1;
                     if (tree[a].size < tree[b].size) return 1;
                     return 0;
+                });
+                keys = keys.filter(function(key) {
+                    // 空ディレクトリははずしておかないと無限ループする
+                    return !(tree[key].isDirectory && tree[key].size < 1);
                 });
 
                 function CalcRectTree(rectTree, keys) {

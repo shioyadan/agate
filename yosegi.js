@@ -30,13 +30,16 @@ var yosegi = {
         var fs = require("fs");
 
         fs.readdir(path, function(err, files) {
+            // エラーでも探索対象に入っているので
+            // 探索済みにカウントする必要がある
+            context.searchingDir -= 1;
+
             if (err) {
                 //console.log(err);
                 return;
             }
             
             context.searching += files.length;
-            context.searchingDir -= 1;
 
             files.forEach(function(pathElement, i) {
                 var filePath = path + "/" + pathElement;
@@ -66,6 +69,15 @@ var yosegi = {
 
                     context.count++;
                     context.searching -= 1;
+                    /*
+                    if (context.count % (1024*16) == 0) {
+                        console.log("" + context.count + "," + context.searchingDir);
+                    }
+                    if (context.count > 2142208) {
+                        console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
+                    }
+                    */
+                    
                     if (context.searching == 0 && context.searchingDir == 0) {
                         context.finish = false;
                         // Electron のリモート呼び出しは浅いコピーしかしないので
