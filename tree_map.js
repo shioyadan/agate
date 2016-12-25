@@ -12,8 +12,8 @@ var treeMap = {
             return 0;
         });
         keys = keys.filter(function(key) {
-            // 空ディレクトリははずしておかないと無限ループする
-            return !(tree[key].isDirectory && tree[key].size < 1);
+            // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
+            return !(tree[key].size < 1);
         });
 
         // 再帰的にツリーを作成
@@ -25,6 +25,7 @@ var treeMap = {
                 node.size = fileInfo[fileNames[0]].size;
                 node.key = fileNames[0];
                 node.children = null;
+                node.fileInfoChildren = fileInfo[fileNames[0]].children;
                 return;
             }
 
@@ -49,6 +50,7 @@ var treeMap = {
             node.size = leftSize + rightSize;
             node.children = [{},{}];
             node.key = "";
+            node.fileInfoChildren = null;
 
             makeBinNode(node.children[0], left, fileInfo);
             makeBinNode(node.children[1], right, fileInfo);
@@ -63,12 +65,14 @@ var treeMap = {
     // binNode: バイナリツリーのノード
     // areas: 矩形のリスト
     // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
-    createAreas: function(binNode, areas, rect) {
+    createAreas: function(binNode, areas, rect, level) {
 
         if (!binNode.children) {
             areas.push({
                 key: binNode.key,
-                rect: rect
+                fileInfoChildren: binNode.fileInfoChildren,
+                rect: rect,
+                level: level
             });
             return;
         }
@@ -94,32 +98,42 @@ var treeMap = {
                 [left, top, right, top + height*ratio],
                 [left, top + height*ratio, right, bottom],
             ];
-        treeMap.createAreas(binNode.children[0], areas, divided[0]);
-        treeMap.createAreas(binNode.children[1], areas, divided[1]);
+        treeMap.createAreas(binNode.children[0], areas, divided[0], level);
+        treeMap.createAreas(binNode.children[1], areas, divided[1], level);
 
     },
 
     //　描画領域の作成
     createTreeMap: function(fileTree, width, height) {
 
+        var wholeAreas = [];
+
         var parentAreas = [];
         var binTree = treeMap.makeBinTree(fileTree);
-        treeMap.createAreas(binTree, parentAreas, [0, 0, width, height]);
+        treeMap.createAreas(binTree, parentAreas, [0, 0, width, height], 0);
+        wholeAreas = wholeAreas.concat(parentAreas);
 
-        var areas = [];
-        for (var i = 0; i < parentAreas.length; i++) {
-            if (fileTree[parentAreas[i].key].children) {
-                var binTree = treeMap.makeBinTree(fileTree[parentAreas[i].key].children);
-                var r = [
-                    parentAreas[i].rect[0] + 10,
-                    parentAreas[i].rect[1] + 40,
-                    parentAreas[i].rect[2] - 10,
-                    parentAreas[i].rect[3] - 10,
-                ];
-                treeMap.createAreas(binTree, areas, r);
+        for (var j = 1; j < 8; j++) {
+            var areas = [];
+            for (var i = 0; i < parentAreas.length; i++) {
+                if (parentAreas[i].fileInfoChildren) {
+                    var binTree = treeMap.makeBinTree(parentAreas[i].fileInfoChildren);
+                    var r = [
+                        parentAreas[i].rect[0] + 10,
+                        parentAreas[i].rect[1] + 40,
+                        parentAreas[i].rect[2] - 10,
+                        parentAreas[i].rect[3] - 10,
+                    ];
+                    if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+                        treeMap.createAreas(binTree, areas, r, j);
+                    }
+                }
             }
+            wholeAreas = wholeAreas.concat(areas);
+            parentAreas = areas;
         }
-        return parentAreas.concat(areas);
+
+        return wholeAreas;
 
     }
 };
