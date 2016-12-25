@@ -1,4 +1,4 @@
-var yosegi = {
+var fileInfo = {
 
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
@@ -7,7 +7,7 @@ var yosegi = {
         for(var key in tree) {
             var val = tree[key];
             if (val.isDirectory && val.children) {
-                val.size = yosegi.updateDirectorySize(val.children);
+                val.size = fileInfo.updateDirectorySize(val.children);
             }
             size += val.size;
         }
@@ -18,13 +18,13 @@ var yosegi = {
     // render プロセスで実行
     getFileTree: function(path, callback) {
         // main プロセスで getFileListBody を呼び出す
-        var remote = require("electron").remote.require("./yosegi");
+        var remote = require("electron").remote.require("./file_info");
         remote.getFileTreeOnMain(path, function(context, treeJSON) {
             // JSON にシリアライズされて送られてくるので，展開する
             tree = JSON.parse(treeJSON);
 
             // 各ディレクトリのサイズ反映
-            yosegi.updateDirectorySize(tree);
+            fileInfo.updateDirectorySize(tree);
 
             // 呼び出し元に返す
             callback(context, tree);
@@ -45,7 +45,7 @@ var yosegi = {
             callCount: 0,
         };
 
-        yosegi.getFileTreeOnMainBody(path, context, context.tree);
+        fileInfo.getFileTreeOnMainBody(path, context, context.tree);
     },
         
     // getFileTree の実装
@@ -62,7 +62,7 @@ var yosegi = {
         if (context.callCount % 2 == 0) {
             setTimeout(
                 function() {
-                    yosegi.getFileTreeOnMainBody(path, context, parent);
+                    fileInfo.getFileTreeOnMainBody(path, context, parent);
                 },
                 1000
             );
@@ -104,7 +104,7 @@ var yosegi = {
                         if (stat.isDirectory()) {
                             node.children = {};
                             context.searchingDir++;
-                            yosegi.getFileTreeOnMainBody(
+                            fileInfo.getFileTreeOnMainBody(
                                 filePath, context, node.children
                             );
                         }
@@ -125,7 +125,7 @@ var yosegi = {
 
         });
     }
-};  // var yosegi = {}
+};  // var file_info = {}
 
 
-module.exports = yosegi;
+module.exports = fileInfo;
