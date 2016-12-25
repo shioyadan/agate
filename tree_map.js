@@ -17,34 +17,42 @@ var treeMap = {
             return !(tree[key].isDirectory && tree[key].size < 1);
         });
 
+        // 再帰的にツリーを作成
+        // 渡された node の中身を書き換える必要があるので注意
         function makeBinNode(node, fileNames, fileInfo) {
 
-            // 渡された node の中身を書き換える必要があるので注意
-            node.left = [];
-            node.right = [];
-            node.leftNode = {};
-            node.rightNode = {};
-            node.leftSize = 0;
-            node.rightSize = 0;
+            // 末端
+            if (fileNames.length <= 1) {
+                node.size = fileInfo[fileNames[0]].size;
+                node.key = fileNames[0];
+                node.children = null;
+                return;
+            }
+
+            var left = [];
+            var right = [];
+            var leftSize = 0;
+            var rightSize = 0;
 
             // ファイルネームは大きいものから降順にソートされてる
             for (var i = 0; i < fileNames.length; i++) {
                 // 左右のうち，現在小さい方に加えることでバランスさせる
-                if (node.leftSize < node.rightSize) {
-                    node.left.push(fileNames[i]);
-                    node.leftSize += fileInfo[fileNames[i]].size;
+                if (leftSize < rightSize) {
+                    left.push(fileNames[i]);
+                    leftSize += fileInfo[fileNames[i]].size;
                 }
                 else{
-                    node.right.push(fileNames[i]);
-                    node.rightSize += fileInfo[fileNames[i]].size;
+                    right.push(fileNames[i]);
+                    rightSize += fileInfo[fileNames[i]].size;
                 }
             }
-            if (node.left.length > 1) {
-                makeBinNode(node.leftNode, node.left, fileInfo);
-            }
-            if (node.right.length > 1) {
-                makeBinNode(node.rightNode, node.right, fileInfo);
-            }
+
+            node.size = leftSize + rightSize;
+            node.children = [{},{}];
+            node.key = "";
+
+            makeBinNode(node.children[0], left, fileInfo);
+            makeBinNode(node.children[1], right, fileInfo);
         }
 
         var binTree = {};
@@ -56,13 +64,25 @@ var treeMap = {
     createTreeMap: function(fileTree, width, height) {
 
         function calcArea(binTree, areas, rect) {
+
+            if (!binTree.children) {
+                areas.push({
+                    key: binTree.key,
+                    rect: rect
+                });
+                return;
+            }
+            
             var left = rect[0];
             var top = rect[1];
             var right = rect[2];
             var bottom = rect[3];
             var width = right - left;
             var height = bottom - top;
-            var ratio = 1.0 * binTree.leftSize / (binTree.leftSize + binTree.rightSize);
+            var ratio = 
+                1.0 * 
+                binTree.children[0].size / 
+                (binTree.children[0].size + binTree.children[1].size);
 
             // 長い辺の方を分割
             var divided = (width > height) ?
@@ -74,32 +94,13 @@ var treeMap = {
                     [left, top, right, top + height*ratio],
                     [left, top + height*ratio, right, bottom],
                 ];
-                
-
-            if (binTree.left.length == 1) {
-                areas.push({
-                    key: binTree.left[0],
-                    rect: divided[0]
-                });
-            }
-            else{
-                calcArea(binTree.leftNode, areas, divided[0]);
-            }
-
-            if (binTree.right.length == 1) {
-                areas.push({
-                    key: binTree.right[0],
-                    rect: divided[1]
-                });
-            }
-            else{
-                calcArea(binTree.rightNode, areas, divided[1]);
-            }
+            calcArea(binTree.children[0], areas, divided[0]);
+            calcArea(binTree.children[1], areas, divided[1]);
 
         }
-        var rectTree = treeMap.makeBinTree(fileTree);
+        var binTree = treeMap.makeBinTree(fileTree);
         var areas = [];
-        calcArea(rectTree, areas, [0, 0, width, height]);
+        calcArea(binTree, areas, [0, 0, width, height]);
         return areas;
     }
 };
