@@ -120,7 +120,7 @@ var treeMap = {
                     var binTree = treeMap.makeBinTree(parentAreas[i].fileInfoChildren);
                     var r = [
                         parentAreas[i].rect[0] + 10,
-                        parentAreas[i].rect[1] + 40,
+                        parentAreas[i].rect[1] + 30,
                         parentAreas[i].rect[2] - 10,
                         parentAreas[i].rect[3] - 10,
                     ];
