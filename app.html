@@ -164,7 +164,7 @@
                     "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, tree) {
                         self.app.navTitle = context.count;
-                        self.app.calcRects(tree);
+                        self.app.tree = tree;
                         self.app.draw();
                     }
                 );
@@ -213,8 +213,7 @@
 
                 var rectRoot = {};
                 CalcRectTree(rectRoot, keys);
-                app.rectTree = rectRoot;
-                app.tree = tree;
+                return rectRoot;
             },
 
             //　描画
@@ -281,8 +280,9 @@
 
                     }
                 }
+                var rectTree = self.app.calcRects(app.tree);
                 var areas = [];
-                CalcArea(app.rectTree, areas, 0, 0, width, height, width > height);
+                CalcArea(rectTree, areas, 0, 0, width, height, width > height);
 
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
