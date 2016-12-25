@@ -4,7 +4,6 @@ var treeMap = {
     // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
     // が小さくなる･･･ と思う
     makeBinTree: function(tree) {
-
         // tree 直下のファイル/ディレクトリのサイズでソート
         var keys = Object.keys(tree);
         keys.sort(function(a, b) {
@@ -60,48 +59,68 @@ var treeMap = {
         return binTree;
     },
 
-    //　描画
+    // バイナリツリーから矩形のリストを再帰的に作成する
+    // binNode: バイナリツリーのノード
+    // areas: 矩形のリスト
+    // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
+    createAreas: function(binNode, areas, rect) {
+
+        if (!binNode.children) {
+            areas.push({
+                key: binNode.key,
+                rect: rect
+            });
+            return;
+        }
+        
+        var left = rect[0];
+        var top = rect[1];
+        var right = rect[2];
+        var bottom = rect[3];
+        var width = right - left;
+        var height = bottom - top;
+        var ratio = 
+            1.0 * 
+            binNode.children[0].size / 
+            (binNode.children[0].size + binNode.children[1].size);
+
+        // 長い辺の方を分割
+        var divided = (width > height) ?
+            [
+                [left, top, left + width*ratio, bottom],
+                [left + width*ratio, top, right, bottom],
+            ] :
+            [
+                [left, top, right, top + height*ratio],
+                [left, top + height*ratio, right, bottom],
+            ];
+        treeMap.createAreas(binNode.children[0], areas, divided[0]);
+        treeMap.createAreas(binNode.children[1], areas, divided[1]);
+
+    },
+
+    //　描画領域の作成
     createTreeMap: function(fileTree, width, height) {
 
-        function calcArea(binTree, areas, rect) {
-
-            if (!binTree.children) {
-                areas.push({
-                    key: binTree.key,
-                    rect: rect
-                });
-                return;
-            }
-            
-            var left = rect[0];
-            var top = rect[1];
-            var right = rect[2];
-            var bottom = rect[3];
-            var width = right - left;
-            var height = bottom - top;
-            var ratio = 
-                1.0 * 
-                binTree.children[0].size / 
-                (binTree.children[0].size + binTree.children[1].size);
-
-            // 長い辺の方を分割
-            var divided = (width > height) ?
-                [
-                    [left, top, left + width*ratio, bottom],
-                    [left + width*ratio, top, right, bottom],
-                ] :
-                [
-                    [left, top, right, top + height*ratio],
-                    [left, top + height*ratio, right, bottom],
-                ];
-            calcArea(binTree.children[0], areas, divided[0]);
-            calcArea(binTree.children[1], areas, divided[1]);
-
-        }
+        var parentAreas = [];
         var binTree = treeMap.makeBinTree(fileTree);
+        treeMap.createAreas(binTree, parentAreas, [0, 0, width, height]);
+
         var areas = [];
-        calcArea(binTree, areas, [0, 0, width, height]);
-        return areas;
+        for (var i = 0; i < parentAreas.length; i++) {
+            if (fileTree[parentAreas[i].key].children) {
+                var binTree = treeMap.makeBinTree(fileTree[parentAreas[i].key].children);
+                var r = [
+                    parentAreas[i].rect[0] + 10,
+                    parentAreas[i].rect[1] + 40,
+                    parentAreas[i].rect[2] - 10,
+                    parentAreas[i].rect[3] - 10,
+                ];
+                treeMap.createAreas(binTree, areas, r);
+            }
+        }
+        return parentAreas.concat(areas);
+
     }
 };
 
