@@ -170,52 +170,6 @@
                 );
             },
 
-            // 矩形領域を計算する
-            calcRects: function(tree) {
-
-                var keys = Object.keys(tree);
-                keys.sort(function(a, b) {
-                    if (tree[a].size > tree[b].size) return -1;
-                    if (tree[a].size < tree[b].size) return 1;
-                    return 0;
-                });
-                keys = keys.filter(function(key) {
-                    // 空ディレクトリははずしておかないと無限ループする
-                    return !(tree[key].isDirectory && tree[key].size < 1);
-                });
-
-                function CalcRectTree(rectTree, keys) {
-
-                    rectTree.left = [];
-                    rectTree.right = [];
-                    rectTree.leftNode = {};
-                    rectTree.rightNode = {};
-                    rectTree.leftSize = 0;
-                    rectTree.rightSize = 0;
-
-                    for (var i = 0; i < keys.length; i++) {
-                        if (rectTree.leftSize < rectTree.rightSize) {
-                            rectTree.left.push(keys[i]);
-                            rectTree.leftSize += tree[keys[i]].size;
-                        }
-                        else{
-                            rectTree.right.push(keys[i]);
-                            rectTree.rightSize += tree[keys[i]].size;
-                        }
-                    }
-                    if (rectTree.left.length > 1) {
-                        CalcRectTree(rectTree.leftNode, rectTree.left);
-                    }
-                    if (rectTree.right.length > 1) {
-                        CalcRectTree(rectTree.rightNode, rectTree.right);
-                    }
-                }
-
-                var rectRoot = {};
-                CalcRectTree(rectRoot, keys);
-                return rectRoot;
-            },
-
             //　描画
             draw: function() {
                 if (!app.tree) {
@@ -225,64 +179,7 @@
                 var canvas = self.refs.canvas;
                 var width = canvas.width;
                 var height = canvas.height;
-
-                function CalcArea(rectTree, areas, left, top, right, bottom, horizontal) {
-                    var width = right - left;
-                    var height = bottom - top;
-                    if (horizontal) {
-                        var leftWidth = width * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
-                        var rightWidth = width * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
-
-                        if (rectTree.left.length == 1) {
-                            areas.push({
-                                key: rectTree.left[0],
-                                pos: [left, top, left + leftWidth, bottom]
-                            });
-                        }
-                        else{
-                            CalcArea(
-                                rectTree.leftNode, areas, left, top, left + leftWidth, bottom, leftWidth > height);
-                        }
-
-                        if (rectTree.right.length == 1) {
-                            areas.push({
-                                key: rectTree.right[0],
-                                pos: [left + leftWidth, top, right, bottom]
-                            });
-                        }
-                        else{
-                            CalcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, rightWidth > height);
-                        }
-                    }
-                    else {
-                        var firstHeight = height * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
-                        var secondHeight = height * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
-
-                        if (rectTree.left.length == 1) {
-                            areas.push({
-                                key: rectTree.left[0],
-                                pos: [left, top, right, top + firstHeight]
-                            });
-                        }
-                        else{
-                            CalcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, width > firstHeight);
-                        }
-
-                        if (rectTree.right.length == 1) {
-                            areas.push({
-                                key: rectTree.right[0],
-                                pos: [left, top + firstHeight, right, bottom]
-                            });
-                        }
-                        else{
-                            CalcArea(rectTree.rightNode, areas, left, top + firstHeight, right, bottom, width > secondHeight);
-                        }
-
-                    }
-                }
-                var rectTree = self.app.calcRects(app.tree);
-                var areas = [];
-                CalcArea(rectTree, areas, 0, 0, width, height, width > height);
+                var areas = treeMap.createTreeMap(app.tree, width, height);
 
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
