@@ -1,13 +1,34 @@
 var yosegi = {
 
+    // tree で渡されてくるツリーにおいて，
+    // 各ディレクトリが含む合計サイズを計算して適用する
+    updateDirectorySize: function(tree) {
+        var size = 0;
+        for(var key in tree) {
+            var val = tree[key];
+            if (val.isDirectory && val.children) {
+                val.size = yosegi.updateDirectorySize(val.children);
+            }
+            size += val.size;
+        }
+        return size;
+    },
+
     // path により指定したフォルダ以下のファイルツリーを取得
     // render プロセスで実行
     getFileTree: function(path, callback) {
         // main プロセスで getFileListBody を呼び出す
         var remote = require("electron").remote.require("./yosegi");
-        //var yosegi = require("./yosegi");
-        
-        remote.getFileTreeOnMain(path, callback);
+        remote.getFileTreeOnMain(path, function(context, treeJSON) {
+            // JSON にシリアライズされて送られてくるので，展開する
+            tree = JSON.parse(treeJSON);
+
+            // 各ディレクトリのサイズ反映
+            yosegi.updateDirectorySize(tree);
+
+            // 呼び出し元に返す
+            callback(context, tree);
+        });
     },
 
     // getFileTree の実装のエントリポイント
@@ -20,7 +41,8 @@ var yosegi = {
             finish: false,
             searching: 0,
             searchingDir: 1,
-            tree: {}
+            tree: {},
+            callCount: 0,
         };
 
         yosegi.getFileTreeOnMainBody(path, context, context.tree);
@@ -29,6 +51,24 @@ var yosegi = {
     // getFileTree の実装
     // main プロセスで実行
     getFileTreeOnMainBody: function(path, context, parent) {
+
+        context.callCount += 1;
+        /*
+        if (context.callCount % (1024) == 0) {
+            console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
+        }
+        */
+        /*
+        if (context.callCount % 2 == 0) {
+            setTimeout(
+                function() {
+                    yosegi.getFileTreeOnMainBody(path, context, parent);
+                },
+                1000
+            );
+            return;
+        }*/
+
         //var fs = require("electron").remote.require("fs");
         var fs = require("fs");
 
@@ -73,9 +113,6 @@ var yosegi = {
                     context.count++;
                     context.searching -= 1;
 
-                    if (context.count % (1024*16) == 0) {
-                        console.log("" + context.count + "," + context.searchingDir);
-                    }
                     
                     if (context.searching == 0 && context.searchingDir == 0) {
                         context.finish = false;

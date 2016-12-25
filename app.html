@@ -159,12 +159,12 @@
                 //var yosegi = require("electron").remote.require("./yosegi");
                 var yosegi = require("./yosegi");
                 yosegi.getFileTree(
-                    "C:\\",
+                    //"C:\\",
                     //"./", 
-                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
-                    function(context, treeJSON) {
+                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    function(context, tree) {
                         self.app.navTitle = context.count;
-                        self.app.calcRects(JSON.parse(treeJSON));
+                        self.app.calcRects(tree);
                         self.app.draw();
                     }
                 );
@@ -172,21 +172,6 @@
 
             // 矩形領域を計算する
             calcRects: function(tree) {
-
-                function updateDirectorySize(tree) {
-                    var size = 0;
-                    for(var key in tree) {
-                        var val = tree[key];
-                        if (val.isDirectory && val.children) {
-                            val.size = updateDirectorySize(val.children);
-                        }
-                        size += val.size;
-                    }
-                    return size;
-                }
-
-                // 各ディレクトリのサイズ反映
-                updateDirectorySize(tree);
 
                 var keys = Object.keys(tree);
                 keys.sort(function(a, b) {
@@ -310,7 +295,7 @@
 
                     c.font= 'bold 20px Century Gothic';
                     c.strokeStyle = '#00A3D9';
-                    c.lineWidth = 6; 
+                    c.lineWidth = 3; 
                     c.lineJoin = 'round';
                     c.fillStyle = '#fff';
                     c.fillText(areas[i].key, pos[0] + 10, pos[1] + 20 + 5);
