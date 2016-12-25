@@ -55,63 +55,51 @@ var treeMap = {
     //　描画
     createTreeMap: function(fileTree, width, height) {
 
-        function calcArea(rectTree, areas, left, top, right, bottom, horizontal) {
+        function calcArea(binTree, areas, rect) {
+            var left = rect[0];
+            var top = rect[1];
+            var right = rect[2];
+            var bottom = rect[3];
             var width = right - left;
             var height = bottom - top;
-            if (horizontal) {
-                var leftWidth = width * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
-                var rightWidth = width * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
+            var ratio = 1.0 * binTree.leftSize / (binTree.leftSize + binTree.rightSize);
 
-                if (rectTree.left.length == 1) {
-                    areas.push({
-                        key: rectTree.left[0],
-                        pos: [left, top, left + leftWidth, bottom]
-                    });
-                }
-                else{
-                    calcArea(
-                        rectTree.leftNode, areas, left, top, left + leftWidth, bottom, leftWidth > height);
-                }
+            // 長い辺の方を分割
+            var divided = (width > height) ?
+                [
+                    [left, top, left + width*ratio, bottom],
+                    [left + width*ratio, top, right, bottom],
+                ] :
+                [
+                    [left, top, right, top + height*ratio],
+                    [left, top + height*ratio, right, bottom],
+                ];
+                
 
-                if (rectTree.right.length == 1) {
-                    areas.push({
-                        key: rectTree.right[0],
-                        pos: [left + leftWidth, top, right, bottom]
-                    });
-                }
-                else{
-                    calcArea(rectTree.rightNode, areas, left + leftWidth, top, right, bottom, rightWidth > height);
-                }
+            if (binTree.left.length == 1) {
+                areas.push({
+                    key: binTree.left[0],
+                    rect: divided[0]
+                });
             }
-            else {
-                var firstHeight = height * rectTree.leftSize / (rectTree.leftSize + rectTree.rightSize);
-                var secondHeight = height * rectTree.rightSize / (rectTree.leftSize + rectTree.rightSize);
-
-                if (rectTree.left.length == 1) {
-                    areas.push({
-                        key: rectTree.left[0],
-                        pos: [left, top, right, top + firstHeight]
-                    });
-                }
-                else{
-                    calcArea(rectTree.leftNode, areas, left, top, right, top + firstHeight, width > firstHeight);
-                }
-
-                if (rectTree.right.length == 1) {
-                    areas.push({
-                        key: rectTree.right[0],
-                        pos: [left, top + firstHeight, right, bottom]
-                    });
-                }
-                else{
-                    calcArea(rectTree.rightNode, areas, left, top + firstHeight, right, bottom, width > secondHeight);
-                }
-
+            else{
+                calcArea(binTree.leftNode, areas, divided[0]);
             }
+
+            if (binTree.right.length == 1) {
+                areas.push({
+                    key: binTree.right[0],
+                    rect: divided[1]
+                });
+            }
+            else{
+                calcArea(binTree.rightNode, areas, divided[1]);
+            }
+
         }
         var rectTree = treeMap.makeBinTree(fileTree);
         var areas = [];
-        calcArea(rectTree, areas, 0, 0, width, height, width > height);
+        calcArea(rectTree, areas, [0, 0, width, height]);
         return areas;
     }
 };

@@ -182,19 +182,19 @@
 
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
-                    pos = areas[i].pos;
+                    var rect = areas[i].rect;
                     c.fillStyle = "rgb(200, 200, 200)";
-                    c.fillRect(pos[0], pos[1], pos[2], pos[3]);
+                    c.fillRect(rect[0], rect[1], rect[2], rect[3]);
 
                     c.strokeStyle = "rgb(100, 100, 100)";
-                    c.strokeRect(pos[0], pos[1], pos[2], pos[3]);
+                    c.strokeRect(rect[0], rect[1], rect[2], rect[3]);
 
                     c.font= 'bold 20px Century Gothic';
                     c.strokeStyle = '#00A3D9';
                     c.lineWidth = 3; 
                     c.lineJoin = 'round';
                     c.fillStyle = '#fff';
-                    c.fillText(areas[i].key, pos[0] + 10, pos[1] + 20 + 5);
+                    c.fillText(areas[i].key, rect[0] + 10, rect[1] + 20 + 5);
                 }
 
 
