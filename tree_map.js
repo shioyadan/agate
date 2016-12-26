@@ -90,7 +90,7 @@ let treeMap = {
 
         // 長い辺の方を分割
         let divided = 
-            (width > height) ?
+            (Math.ceil(width/10) > Math.ceil(height/10)) ?
             [
                 [left, top, left + width*ratio, bottom],
                 [left + width*ratio, top, right, bottom],
@@ -105,7 +105,7 @@ let treeMap = {
     },
 
     // 描画領域の作成
-    createTreeMap: function(fileTree, width, height) {
+    createTreeMap: function(fileTree, width, height, clipRect) {
 
         let wholeAreas = [];
 
@@ -114,7 +114,7 @@ let treeMap = {
         treeMap.createAreas(parentBinTree, parentAreas, [0, 0, width, height], 0);
         wholeAreas = wholeAreas.concat(parentAreas);
 
-        for (let j = 1; j < 8; j++) {
+        for (let j = 1; j < 100; j++) {
             let areas = [];
             for (let a of parentAreas) {
                 if (a.fileInfoChildren) {
@@ -125,10 +125,23 @@ let treeMap = {
                         a.rect[2] - 10,
                         a.rect[3] - 10,
                     ];
+
+                    // 範囲外なら，これ以上は探索しない
+                    if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
+                        r[1] > clipRect[3] || r[3] < clipRect[1]) {
+                        continue;
+                    }
+
+                    // 一定以上の大きさなら探索
                     if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
                         treeMap.createAreas(binTree, areas, r, j);
                     }
                 }
+            }
+
+            // 新規追加エリアがないので抜ける
+            if (areas.length == 0) {
+                break;
             }
             wholeAreas = wholeAreas.concat(areas);
             parentAreas = areas;

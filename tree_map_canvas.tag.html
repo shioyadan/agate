@@ -81,10 +81,18 @@
                     return;
                 }
 
+                let canvas = self.refs.canvas;
+                let width = canvas.width;
+                let height = canvas.height;
+
                 let zoom = private.calcZoomRatio(private.zoomLevel);
                 let virtualWidth = 1600 * zoom;
                 let virtualHeight = 900 * zoom;
-                let areas = treeMap.createTreeMap(self.private.tree, virtualWidth, virtualHeight);
+                let areas = treeMap.createTreeMap(
+                    self.private.tree, 
+                    virtualWidth, virtualHeight, 
+                    [private.viewPoint[0], private.viewPoint[1], private.viewPoint[0] + width, private.viewPoint[1] + height]
+                );
 
                 let fillStyle = [];
                 let strokeStyle = [];
@@ -93,12 +101,12 @@
                     strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
                 }
 
-                let canvas = self.refs.canvas;
-                let width = canvas.width;
-                let height = canvas.height;
                 let c = canvas.getContext("2d");
 
-                c.clearRect(0, 0, width, height);
+                //c.clearRect(0, 0, width, height);
+                c.fillStyle = "rgb(200,200,200)";
+                c.fillRect(0, 0, width, height);
+
 
                 // ビューポートの場所に更新
                 for (let a of areas) {
@@ -108,17 +116,40 @@
                     a.rect[3] -= private.viewPoint[1];
                 }
 
-                for (let i = 0; i < areas.length; i++) {
-                    let rect = areas[i].rect;
+                // 範囲外のオブジェクトを排除
+                areas = areas.filter(function(a) {
+                    if (a.rect[0] > width || a.rect[2] < 0 || 
+                        a.rect[1] > height || a.rect[3] < 0) {
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                });
+                /*
+                areas = areas.map(function(a) {
+                    if (a.rect[0] < 0) { a.rect[0] = -5; }
+                    if (a.rect[1] < 0) { a.rect[1] = -5; }
+                    if (a.rect[2] > width) { a.rect[2] = width+5; }
+                    if (a.rect[3] > height) { a.rect[3] = height+5; }
+                    return a;
+                });
+                */
+
+                for (let a of areas) {
+                    let rect = a.rect;
                     
                     // レベルに応じた色にする
-                    c.fillStyle = fillStyle[areas[i].level];
+                    c.fillStyle = fillStyle[a.level];
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+                }
 
+                for (let a of areas) {
+                    let rect = a.rect;
                     // 枠線の太さもレベルに応じる
-                    c.lineWidth = Math.max(2 - areas[i].level/2, 0.5); 
+                    c.lineWidth = Math.max(2 - a.level/2, 0.5); 
                     // 枠線の色は，基準色から明度をおとしたものに
-                    c.strokeStyle = strokeStyle[areas[i].level];
+                    c.strokeStyle = strokeStyle[a.level];
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
