@@ -1,11 +1,11 @@
-var fileInfo = {
+let fileInfo = {
 
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
     updateDirectorySize: function(tree) {
-        var size = 0;
-        for(var key in tree) {
-            var val = tree[key];
+        let size = 0;
+        for(let key in tree) {
+            let val = tree[key];
             if (val.isDirectory && val.children) {
                 val.size = fileInfo.updateDirectorySize(val.children);
             }
@@ -18,14 +18,14 @@ var fileInfo = {
     // render プロセスで実行
     getFileTree: function(path, callback) {
         // main プロセスで getFileListBody を呼び出す
-        //var remote = require("electron").remote.require("./file_info");
+        //let remote = require("electron").remote.require("./file_info");
         //remote.getFileTreeOnMain(path, function(context, treeJSON) {
 
         fileInfo.getFileTreeOnMain(path, function(context, treeJSON) {
 
             // JSON にシリアライズされて送られてくるので，展開する
             //tree = JSON.parse(treeJSON);
-            var tree = treeJSON;
+            let tree = treeJSON;
 
             // 各ディレクトリのサイズ反映
             fileInfo.updateDirectorySize(tree);
@@ -39,7 +39,7 @@ var fileInfo = {
     // main プロセスで実行
     getFileTreeOnMain: function(path, callback) {
 
-        var context = {
+        let context = {
             count: 0,
             callback: callback,
             finish: false,
@@ -78,8 +78,8 @@ var fileInfo = {
             }
         }*/
 
-        //var fs = require("electron").remote.require("fs");
-        var fs = require("fs");
+        //let fs = require("electron").remote.require("fs");
+        let fs = require("fs");
 
         fs.readdir(path, function(err, files) {
             // エラーでも探索対象に入っているので
@@ -94,7 +94,7 @@ var fileInfo = {
             context.searching += files.length;
 
             files.forEach(function(pathElement, i) {
-                var filePath = path + "/" + pathElement;
+                let filePath = path + "/" + pathElement;
 
                 fs.stat(filePath, function(err, stat) {
 
@@ -103,7 +103,7 @@ var fileInfo = {
                     }
                     else{
                         // ファイル情報ノード作成
-                        var node = {
+                        let node = {
                             size: stat.size,
                             isDirectory: stat.isDirectory(),
                             children: null
@@ -138,6 +138,6 @@ var fileInfo = {
 
         });
     }
-};  // var file_info = {}
+};  // let file_info = {}
 
 module.exports = fileInfo;

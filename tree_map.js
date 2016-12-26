@@ -1,11 +1,11 @@
-var treeMap = {
+let treeMap = {
     // tree からバイナリツリーを作る
     // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
     // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
     // が小さくなる･･･ と思う
     makeBinTree: function(tree) {
         // tree 直下のファイル/ディレクトリのサイズでソート
-        var keys = Object.keys(tree);
+        let keys = Object.keys(tree);
         keys.sort(function(a, b) {
             if (tree[a].size > tree[b].size) return -1;
             if (tree[a].size < tree[b].size) return 1;
@@ -29,21 +29,21 @@ var treeMap = {
                 return;
             }
 
-            var left = [];
-            var right = [];
-            var leftSize = 0;
-            var rightSize = 0;
+            let left = [];
+            let right = [];
+            let leftSize = 0;
+            let rightSize = 0;
 
             // ファイルネームは大きいものから降順にソートされてる
-            for (var i = 0; i < fileNames.length; i++) {
+            for (let fileName of fileNames) {
                 // 左右のうち，現在小さい方に加えることでバランスさせる
                 if (leftSize < rightSize) {
-                    left.push(fileNames[i]);
-                    leftSize += fileInfo[fileNames[i]].size;
+                    left.push(fileName);
+                    leftSize += fileInfo[fileName].size;
                 }
                 else{
-                    right.push(fileNames[i]);
-                    rightSize += fileInfo[fileNames[i]].size;
+                    right.push(fileName);
+                    rightSize += fileInfo[fileName].size;
                 }
             }
 
@@ -56,7 +56,7 @@ var treeMap = {
             makeBinNode(node.children[1], right, fileInfo);
         }
 
-        var binTree = {};
+        let binTree = {};
         makeBinNode(binTree, keys, tree);
         return binTree;
     },
@@ -77,19 +77,19 @@ var treeMap = {
             return;
         }
         
-        var left = rect[0];
-        var top = rect[1];
-        var right = rect[2];
-        var bottom = rect[3];
-        var width = right - left;
-        var height = bottom - top;
-        var ratio = 
+        let left = rect[0];
+        let top = rect[1];
+        let right = rect[2];
+        let bottom = rect[3];
+        let width = right - left;
+        let height = bottom - top;
+        let ratio = 
             1.0 * 
             binNode.children[0].size / 
             (binNode.children[0].size + binNode.children[1].size);
 
         // 長い辺の方を分割
-        var divided = 
+        let divided = 
             (width > height) ?
             [
                 [left, top, left + width*ratio, bottom],
@@ -107,23 +107,23 @@ var treeMap = {
     // 描画領域の作成
     createTreeMap: function(fileTree, width, height) {
 
-        var wholeAreas = [];
+        let wholeAreas = [];
 
-        var parentAreas = [];
-        var parentBinTree = treeMap.makeBinTree(fileTree);
+        let parentAreas = [];
+        let parentBinTree = treeMap.makeBinTree(fileTree);
         treeMap.createAreas(parentBinTree, parentAreas, [0, 0, width, height], 0);
         wholeAreas = wholeAreas.concat(parentAreas);
 
-        for (var j = 1; j < 8; j++) {
-            var areas = [];
-            for (var i = 0; i < parentAreas.length; i++) {
-                if (parentAreas[i].fileInfoChildren) {
-                    var binTree = treeMap.makeBinTree(parentAreas[i].fileInfoChildren);
-                    var r = [
-                        parentAreas[i].rect[0] + 10,
-                        parentAreas[i].rect[1] + 30,
-                        parentAreas[i].rect[2] - 10,
-                        parentAreas[i].rect[3] - 10,
+        for (let j = 1; j < 8; j++) {
+            let areas = [];
+            for (let a of parentAreas) {
+                if (a.fileInfoChildren) {
+                    let binTree = treeMap.makeBinTree(a.fileInfoChildren);
+                    let r = [
+                        a.rect[0] + 10,
+                        a.rect[1] + 30,
+                        a.rect[2] - 10,
+                        a.rect[3] - 10,
                     ];
                     if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
                         treeMap.createAreas(binTree, areas, r, j);

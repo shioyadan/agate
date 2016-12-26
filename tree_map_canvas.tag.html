@@ -6,7 +6,7 @@
     <script>
         /*global treeMap*/ 
 
-        var self = this;
+        let self = this;
 
         
         self.private = {
@@ -17,7 +17,7 @@
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function() {
-                var canvas = self.refs.canvas;
+                let canvas = self.refs.canvas;
                 canvas.onmousewheel = self.private.onMouseWheel;
             },        
 
@@ -31,21 +31,21 @@
                     return;
                 }
 
-                var canvas = self.refs.canvas;
-                var width = canvas.width;
-                var height = canvas.height;
-                var areas = treeMap.createTreeMap(self.private.tree, width, height);
+                let canvas = self.refs.canvas;
+                let width = canvas.width;
+                let height = canvas.height;
+                let areas = treeMap.createTreeMap(self.private.tree, width, height);
 
-                var fillStyle = [];
-                var strokeStyle = [];
-                for (var i = 0; i < 10; i++) {
+                let fillStyle = [];
+                let strokeStyle = [];
+                for (let i = 0; i < 10; i++) {
                     fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
                     strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
                 }
 
-                var c = self.refs.canvas.getContext("2d");
-                for (var i = 0; i < areas.length; i++) {
-                    var rect = areas[i].rect;
+                let c = self.refs.canvas.getContext("2d");
+                for (let i = 0; i < areas.length; i++) {
+                    let rect = areas[i].rect;
                     
                     // レベルに応じた色にする
                     c.fillStyle = fillStyle[areas[i].level];
@@ -58,8 +58,8 @@
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
-                for (var i = 0; i < areas.length; i++) {
-                    var rect = areas[i].rect;
+                for (let i = 0; i < areas.length; i++) {
+                    let rect = areas[i].rect;
 
                     // 文字領域が確保できた場合は描画
                     if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
@@ -91,7 +91,7 @@
 
         // サイズを適用
         self.on("update", function() {
-            var canvas = self.refs.canvas;
+            let canvas = self.refs.canvas;
             canvas.width = self.width;
             canvas.height = self.height;
             self.private.draw();

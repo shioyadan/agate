@@ -20,8 +20,17 @@ module.exports = {
         "semi": [
             "error",
             "always"
+        ],
+        "no-var": [
+            "error"
         ]
     },
-    "plugins": ["html"]
 
+    // HTML 内のスクリプトをチェックするためにプラグインを有効化
+    "plugins": ["html"],
+
+    //
+    "parserOptions": {
+        "ecmaVersion": 6,
+    },
 };

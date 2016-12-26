@@ -25,7 +25,7 @@
         </div>
     </div>
     <script>
-        var self = this;
+        let self = this;
         self.modal = function(title, msg, button) {
             self.opts.title = title;
             self.opts.msg = msg;
@@ -81,17 +81,18 @@
     </nav>
 
     <script>
-        var self = this;
+        let self = this;
 
         self.title = "test";
         self.onOpenFolder = null;
 
         // Update handler
-        self.on('update', function() {
+        self.on("update", function() {
         });
 
         // Close the dropdown list
         self.closeDropDown = function() {
+            /* global $ */
             $("div#id_app_navbar").collapse("hide");
         };
 
@@ -129,10 +130,10 @@
 
 
     <script>
-        var self = this;
+        let self = this;
 
         // アプリケーションのコンテキスト
-        var app = {
+        let app = {
             mode: "tome",   // 現在のアプリのモード
 
             // ダイアログを表示
@@ -144,7 +145,9 @@
             // フォルダのオープン
             openFolder: function(path){
 
-                //var fileInfo = require("electron").remote.require("./fileInfo");
+                //let fileInfo = require("electron").remote.require("./fileInfo");
+
+                /* global fileInfo */
                 fileInfo.getFileTree(
                     //"C:\\",
                     "./", 
@@ -161,8 +164,8 @@
             onResize: function() {
                 // CSS で指定するとぼける
                 // キャンバスのサイズを無理矢理変更する必要がある
-                var canvas = self.refs.tree_map_canvas;
-                var canvas_holder = self.refs.canvas_holder;
+                let canvas = self.refs.tree_map_canvas;
+                let canvas_holder = self.refs.canvas_holder;
                 canvas.width = canvas_holder.offsetWidth;
                 // navbar の分を引く
                 canvas.height = canvas_holder.offsetHeight - self.tags.app_navbar.getHeight();
