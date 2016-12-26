@@ -9,20 +9,70 @@
         let self = this;
 
         
-        self.private = {
+        let private = {
 
             // ファイルツリー
             tree: null,
+
+            // 表示系
+            zoomLevel: 0,
+            viewPoint: [0, 0],
+            inDrag: false,
+            prevMousePoint: [0, 0],
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function() {
                 let canvas = self.refs.canvas;
                 canvas.onmousewheel = self.private.onMouseWheel;
+                canvas.onmousemove = self.private.onMouseMove;
+                canvas.onmousedown = self.private.onMouseDown;
+                canvas.onmouseup = self.private.onMouseUp;
+                canvas.onmouseleave = self.private.onMouseUp;
             },        
+
+            // 拡大率
+            calcZoomRatio: function(level) {
+                return Math.pow(1.2, level);
+            },
 
             // マウスホイール操作
             onMouseWheel: function(e) {
+                let newZoomLevel = private.zoomLevel + ((e.deltaY < 0) ? 1 : -1);
+                let newZoomRatio = private.calcZoomRatio(newZoomLevel);
+                let oldZoomRatio = private.calcZoomRatio(private.zoomLevel);
+
+                // ポインタの位置が拡大の前後で同じ位置を指すように変換
+                let newAbsPosX = (e.offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
+                let newAbsPosY = (e.offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
+
+                // そこからマウスポインタの位置を引いて，左上の座標を決定
+                private.viewPoint[0] = newAbsPosX - e.offsetX;
+                private.viewPoint[1] = newAbsPosY - e.offsetY;
+                
+                private.zoomLevel = newZoomLevel;
+                private.draw();
+            },
+
+            // マウス移動
+            onMouseMove: function(e) {
+                if (private.inDrag){
+                    private.viewPoint[0] += private.prevMousePoint[0] - e.offsetX;
+                    private.viewPoint[1] += private.prevMousePoint[1] - e.offsetY;
+                    private.prevMousePoint = [e.offsetX, e.offsetY];
+                    private.draw();
+                }
+            },
+            onMouseDown: function(e) {
+                if (e.buttons & 1) {
+                    private.inDrag = true;
+                    private.prevMousePoint = [e.offsetX, e.offsetY];
+                }
+            },
+            onMouseUp: function(e) {
+                if (!(e.buttons & 1)) { // 離したので 0 になる
+                    private.inDrag = false;
+                }
             },
 
             // 描画
@@ -31,10 +81,10 @@
                     return;
                 }
 
-                let canvas = self.refs.canvas;
-                let width = canvas.width;
-                let height = canvas.height;
-                let areas = treeMap.createTreeMap(self.private.tree, width, height);
+                let zoom = private.calcZoomRatio(private.zoomLevel);
+                let virtualWidth = 1600 * zoom;
+                let virtualHeight = 900 * zoom;
+                let areas = treeMap.createTreeMap(self.private.tree, virtualWidth, virtualHeight);
 
                 let fillStyle = [];
                 let strokeStyle = [];
@@ -43,7 +93,21 @@
                     strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
                 }
 
-                let c = self.refs.canvas.getContext("2d");
+                let canvas = self.refs.canvas;
+                let width = canvas.width;
+                let height = canvas.height;
+                let c = canvas.getContext("2d");
+
+                c.clearRect(0, 0, width, height);
+
+                // ビューポートの場所に更新
+                for (let a of areas) {
+                    a.rect[0] -= private.viewPoint[0];
+                    a.rect[1] -= private.viewPoint[1];
+                    a.rect[2] -= private.viewPoint[0];
+                    a.rect[3] -= private.viewPoint[1];
+                }
+
                 for (let i = 0; i < areas.length; i++) {
                     let rect = areas[i].rect;
                     
@@ -78,6 +142,8 @@
             }
 
         };
+
+        self.private = private;
 
         // ファイルツリー情報をセット
         self.setTree = function(tree) {
