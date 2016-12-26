@@ -18,10 +18,14 @@ var fileInfo = {
     // render プロセスで実行
     getFileTree: function(path, callback) {
         // main プロセスで getFileListBody を呼び出す
-        var remote = require("electron").remote.require("./file_info");
-        remote.getFileTreeOnMain(path, function(context, treeJSON) {
+        //var remote = require("electron").remote.require("./file_info");
+        //remote.getFileTreeOnMain(path, function(context, treeJSON) {
+
+        fileInfo.getFileTreeOnMain(path, function(context, treeJSON) {
+
             // JSON にシリアライズされて送られてくるので，展開する
-            tree = JSON.parse(treeJSON);
+            //tree = JSON.parse(treeJSON);
+            tree = treeJSON;
 
             // 各ディレクトリのサイズ反映
             fileInfo.updateDirectorySize(tree);
@@ -57,7 +61,8 @@ var fileInfo = {
         if (context.callCount % (1024) == 0) {
             console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
         }
-
+        */
+        /*
         if (context.callCount > 16) {
             if  (context.searching == 0) {
                 context.callCount = 0;
@@ -118,11 +123,15 @@ var fileInfo = {
                     context.searching -= 1;
 
                     
-                    if (context.searching == 0 && context.searchingDir == 0) {
+                    // if ((context.searching == 0 && context.searchingDir == 0) || 
+                    //    (context.count % (1024*4) == 0)) {
+                    if (context.searching == 0 && context.searchingDir == 0){
                         context.finish = false;
                         // Electron のリモート呼び出しは浅いコピーしかしないので
                         // JSON にシリアライズしておくる
-                        context.callback(context, JSON.stringify(context.tree));
+                        //context.callback(context, JSON.stringify(context.tree));
+
+                        context.callback(context, context.tree);
                     }
                 });
             });
