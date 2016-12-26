@@ -160,8 +160,8 @@
                 //var fileInfo = require("electron").remote.require("./fileInfo");
                 fileInfo.getFileTree(
                     //"C:\\",
-                    //"./", 
-                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    "./", 
+                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, tree) {
                         self.app.navTitle = context.count;
                         self.app.tree = tree;
@@ -181,27 +181,38 @@
                 var height = canvas.height;
                 var areas = treeMap.createTreeMap(app.tree, width, height);
 
+                var fillStyle = [];
+                var strokeStyle = [];
+                for (var i = 0; i < 10; i++) {
+                    fillStyle.push("hsl(" + ((200+i*30)%360) + ", 40%, 70%)");
+                    strokeStyle.push("hsl(" + ((200+i*30)%360) + ", 20%, 40%)");
+                }
+
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
                     var rect = areas[i].rect;
                     
                     // レベルに応じた色にする
-                    c.fillStyle = "hsl(" + ((areas[i].level*30)%360) + ", 40%, 70%)";
+                    c.fillStyle = fillStyle[areas[i].level];
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
 
                     // 枠線の太さもレベルに応じる
                     c.lineWidth = Math.max(2 - areas[i].level/2, 1); 
                     // 枠線の色は，基準色から明度をおとしたものに
-                    c.strokeStyle = "hsl(" + ((areas[i].level*30)%360) + ", 20%, 40%)";
+                    c.strokeStyle = strokeStyle[areas[i].level];
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+                }
+
+                for (var i = 0; i < areas.length; i++) {
+                    var rect = areas[i].rect;
 
                     // 文字領域が確保できた場合は描画
                     if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
 
                         // 1回太めに文字の枠線を書く
-                        // この時の色は枠線の色を引き継ぐ
                         c.font = 'bold 15px Century Gothic';
                         c.lineWidth = 4; 
+                        c.strokeStyle = strokeStyle[areas[i].level];
                         c.strokeText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
 
                         // 次に白を重ねて書く
