@@ -116,11 +116,8 @@
     <app_navbar app={app} ref="app_navbar">  <!-- app を渡している -->
     </app_navbar>
 
-    <!-- -->
-    <div style="width:100%; height:100%;" ref="canvas_holder">
-        <canvas ref="canvas">
-        </canvas>
-    </div>
+    <!-- ツリーマップ-->
+    <tree_map></tree_map>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -135,9 +132,6 @@
         var app = {
             mode: "tome",   // 現在のアプリのモード
             navTitle: "",   // ナビゲーションに設定するタイトル
-
-            tree: null,      // 描画対象
-            rectTree: null,      // 描画対象
 
             // ダイアログを表示
             modalDialog: function(msg) {
@@ -160,92 +154,20 @@
                 //var fileInfo = require("electron").remote.require("./fileInfo");
                 fileInfo.getFileTree(
                     //"C:\\",
-                    "./", 
-                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
+                    //"./", 
+                    "C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, tree) {
                         self.app.navTitle = context.count;
-                        self.app.tree = tree;
-                        self.app.draw();
+
+                        self.tags.tree_map.setTree(tree);
                     }
                 );
             },
 
-            //　描画
-            draw: function() {
-                if (!app.tree) {
-                    return;
-                }
-
-                var canvas = self.refs.canvas;
-                var width = canvas.width;
-                var height = canvas.height;
-                var areas = treeMap.createTreeMap(app.tree, width, height);
-
-                var fillStyle = [];
-                var strokeStyle = [];
-                for (var i = 0; i < 10; i++) {
-                    fillStyle.push("hsl(" + ((200+i*30)%360) + ", 40%, 70%)");
-                    strokeStyle.push("hsl(" + ((200+i*30)%360) + ", 20%, 40%)");
-                }
-
-                var c = self.refs.canvas.getContext('2d');
-                for (var i = 0; i < areas.length; i++) {
-                    var rect = areas[i].rect;
-                    
-                    // レベルに応じた色にする
-                    c.fillStyle = fillStyle[areas[i].level];
-                    c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-
-                    // 枠線の太さもレベルに応じる
-                    c.lineWidth = Math.max(2 - areas[i].level/2, 1); 
-                    // 枠線の色は，基準色から明度をおとしたものに
-                    c.strokeStyle = strokeStyle[areas[i].level];
-                    c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-                }
-
-                for (var i = 0; i < areas.length; i++) {
-                    var rect = areas[i].rect;
-
-                    // 文字領域が確保できた場合は描画
-                    if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
-
-                        // 1回太めに文字の枠線を書く
-                        c.font = 'bold 15px Century Gothic';
-                        c.lineWidth = 4; 
-                        c.strokeStyle = strokeStyle[areas[i].level];
-                        c.strokeText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
-
-                        // 次に白を重ねて書く
-                        c.fillStyle = 'rgb(255,255,255)';
-                        c.fillText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
-                    }
-                }
-
-
-            },
-
-            // リサイズハンドラ
-            onResize: function() {
-                // CSS で指定するとぼける
-                // キャンバスのサイズを無理矢理変更する必要がある
-                var canvas = self.refs.canvas;
-                var canvas_holder = self.refs.canvas_holder;
-                canvas.width = canvas_holder.offsetWidth;
-                // navbar の分を引く
-                canvas.height = canvas_holder.offsetHeight - self.tags.app_navbar.getHeight();
-                app.draw();
-            },
-
-
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function(callback) {
-                // ウィンドウのリサイズハンドラ
-                window.addEventListener("resize", app.onResize, false);
-
-                //
-                app.openFolder();
-                app.onResize(); // サイズを適用するために1回呼んどく
+                self.app.openFolder();
             },
         };
 
