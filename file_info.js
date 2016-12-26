@@ -25,7 +25,7 @@ var fileInfo = {
 
             // JSON にシリアライズされて送られてくるので，展開する
             //tree = JSON.parse(treeJSON);
-            tree = treeJSON;
+            var tree = treeJSON;
 
             // 各ディレクトリのサイズ反映
             fileInfo.updateDirectorySize(tree);
@@ -139,6 +139,5 @@ var fileInfo = {
         });
     }
 };  // var file_info = {}
-
 
 module.exports = fileInfo;

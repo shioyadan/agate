@@ -89,7 +89,8 @@ var treeMap = {
             (binNode.children[0].size + binNode.children[1].size);
 
         // 長い辺の方を分割
-        var divided = (width > height) ?
+        var divided = 
+            (width > height) ?
             [
                 [left, top, left + width*ratio, bottom],
                 [left + width*ratio, top, right, bottom],
@@ -103,14 +104,14 @@ var treeMap = {
 
     },
 
-    //　描画領域の作成
+    // 描画領域の作成
     createTreeMap: function(fileTree, width, height) {
 
         var wholeAreas = [];
 
         var parentAreas = [];
-        var binTree = treeMap.makeBinTree(fileTree);
-        treeMap.createAreas(binTree, parentAreas, [0, 0, width, height], 0);
+        var parentBinTree = treeMap.makeBinTree(fileTree);
+        treeMap.createAreas(parentBinTree, parentAreas, [0, 0, width, height], 0);
         wholeAreas = wholeAreas.concat(parentAreas);
 
         for (var j = 1; j < 8; j++) {

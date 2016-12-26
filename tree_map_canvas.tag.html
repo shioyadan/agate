@@ -4,6 +4,8 @@
     </canvas>
 
     <script>
+        /*global treeMap*/ 
+
         var self = this;
 
         
@@ -14,10 +16,16 @@
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
-            init: function(callback) {
+            init: function() {
+                var canvas = self.refs.canvas;
+                canvas.onmousewheel = self.private.onMouseWheel;
             },        
 
-            //　描画
+            // マウスホイール操作
+            onMouseWheel: function(e) {
+            },
+
+            // 描画
             draw: function() {
                 if (!self.private.tree) {
                     return;
@@ -35,7 +43,7 @@
                     strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
                 }
 
-                var c = self.refs.canvas.getContext('2d');
+                var c = self.refs.canvas.getContext("2d");
                 for (var i = 0; i < areas.length; i++) {
                     var rect = areas[i].rect;
                     
@@ -57,13 +65,13 @@
                     if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
 
                         // 1回太めに文字の枠線を書く
-                        c.font = 'bold 15px Century Gothic';
+                        c.font = "bold 15px Century Gothic";
                         c.lineWidth = 4; 
                         c.strokeStyle = strokeStyle[areas[i].level];
                         c.strokeText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
 
                         // 次に白を重ねて書く
-                        c.fillStyle = 'rgb(255,255,255)';
+                        c.fillStyle = "rgb(255,255,255)";
                         c.fillText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
                     }
                 }
@@ -75,7 +83,7 @@
         self.setTree = function(tree) {
             self.private.tree = tree;
             self.private.draw();
-        }
+        };
 
         // エントリポイント
         // マウント時に初期化を行う

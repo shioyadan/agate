@@ -26,7 +26,6 @@
     </div>
     <script>
         var self = this;
-        self.app = opts.app;
         self.modal = function(title, msg, button) {
             self.opts.title = title;
             self.opts.msg = msg;
@@ -36,7 +35,7 @@
         };
         self.modal_message = function(msg) {
             self.modal("おしらせ", msg, "おｋ");
-        }
+        };
     </script>
 </app_dialog>
 
@@ -49,7 +48,7 @@
 
             <div class="navbar-header">
                 <div class="navbar-brand">
-                    {app.navTitle}
+                    {title}
                 </div>
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#id_app_navbar">
                     <span class="icon-bar"></span>
@@ -62,7 +61,7 @@
                 <!-- "navbar-right" alignes items to the right side-->
                 <ul class="nav navbar-nav navbar-left">
                     <li>
-                        <a href="#home" onclick={onOpenFolder}>
+                        <a href="#home" onclick={onOpenFolderInternal}>
                             <span class="glyphicon glyphicon-folder-open"></span> 
                             フォルダを開く
                         </a>
@@ -83,27 +82,29 @@
 
     <script>
         var self = this;
-        self.app = opts.app;
+
+        self.title = "test";
+        self.onOpenFolder = null;
 
         // Update handler
         self.on('update', function() {
         });
 
         // Close the dropdown list
-        self.closeDropDown = function(e) {
+        self.closeDropDown = function() {
             $("div#id_app_navbar").collapse("hide");
-        }
+        };
 
         // "Open folder" is clicked
-        self.onOpenFolder = function(e) {
-            self.app.openFolder();
+        self.onOpenFolderInternal = function() {
             self.closeDropDown();   // Close the list after click
-        }
+            self.onOpenFolder();    // 外部から登録されたハンドラの呼び出し
+        };
 
         // 高さを取得
         self.getHeight = function() {
             return self.refs["app_navbar"].offsetHeight;
-        }
+        };
 
     </script>
 </app_navbar>
@@ -113,7 +114,7 @@
 <app>
 
     <!-- Navigation ber -->
-    <app_navbar app={app} ref="app_navbar">  <!-- app を渡している -->
+    <app_navbar ref="app_navbar">  <!-- app を渡している -->
     </app_navbar>
 
     <!-- ツリーマップ-->
@@ -124,7 +125,7 @@
     <!-- Notification dialog
         This dialog is not visible in usual.
      -->
-    <app_dialog app={app}></app_dialog>
+    <app_dialog></app_dialog>
 
 
     <script>
@@ -133,7 +134,6 @@
         // アプリケーションのコンテキスト
         var app = {
             mode: "tome",   // 現在のアプリのモード
-            navTitle: "",   // ナビゲーションに設定するタイトル
 
             // ダイアログを表示
             modalDialog: function(msg) {
@@ -141,17 +141,8 @@
 
             },
 
-            // ナビゲーションに設定するタイトルの変更
-            setNavTitle: function(title) {
-                // navbar の中でこれを見て勝手に反映してくれる
-                app.navTitle = title;
-            },
-
             // フォルダのオープン
             openFolder: function(path){
-                context = {
-                    count: 0
-                };
 
                 //var fileInfo = require("electron").remote.require("./fileInfo");
                 fileInfo.getFileTree(
@@ -159,9 +150,9 @@
                     "./", 
                     //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
                     function(context, tree) {
-                        self.app.navTitle = context.count;
-
+                        // ナビゲーションに設定するタイトルの変更
                         self.refs.tree_map_canvas.setTree(tree);
+                        self.refs.app_navbar.title = context.count;
                     }
                 );
             },
@@ -180,10 +171,13 @@
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
-            init: function(callback) {
+            init: function() {
                 window.addEventListener("resize", self.app.onResize, false);
                 self.app.onResize();    // サイズを適用しておくために1回呼んでおく
                 self.app.openFolder();
+
+                // フォルダを開くのバインド
+                self.refs.app_navbar.onOpenFolder = app.openFolder;
             },
         };
 
