@@ -184,17 +184,29 @@
                 var c = self.refs.canvas.getContext('2d');
                 for (var i = 0; i < areas.length; i++) {
                     var rect = areas[i].rect;
-                    c.fillStyle = "hsl(" + ((100+areas[i].level*50)%360) + ", 40%, 70%)";
+                    
+                    // レベルに応じた色にする
+                    c.fillStyle = "hsl(" + ((areas[i].level*30)%360) + ", 40%, 70%)";
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
 
-                    c.strokeStyle = "rgb(100, 100, 100)";
+                    // 枠線の太さもレベルに応じる
+                    c.lineWidth = Math.max(2 - areas[i].level/2, 1); 
+                    // 枠線の色は，基準色から明度をおとしたものに
+                    c.strokeStyle = "hsl(" + ((areas[i].level*30)%360) + ", 20%, 40%)";
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
 
-                    c.font= 'bold 15px Century Gothic';
-                    c.lineWidth = 2; 
-                    c.fillStyle = '#fff';
+                    // 文字領域が確保できた場合は描画
                     if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
-                        c.fillText(areas[i].key, rect[0] + 10, rect[1] + 15 + 5);
+
+                        // 1回太めに文字の枠線を書く
+                        // この時の色は枠線の色を引き継ぐ
+                        c.font = 'bold 15px Century Gothic';
+                        c.lineWidth = 4; 
+                        c.strokeText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
+
+                        // 次に白を重ねて書く
+                        c.fillStyle = 'rgb(255,255,255)';
+                        c.fillText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
                     }
                 }
 

@@ -53,21 +53,24 @@ var fileInfo = {
     getFileTreeOnMainBody: function(path, context, parent) {
 
         context.callCount += 1;
-        /*
         if (context.callCount % (1024) == 0) {
             console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
         }
-        */
-        /*
-        if (context.callCount % 2 == 0) {
-            setTimeout(
-                function() {
-                    fileInfo.getFileTreeOnMainBody(path, context, parent);
-                },
-                1000
-            );
-            return;
-        }*/
+
+        if (context.callCount > 16) {
+            if  (context.searching == 0) {
+                context.callCount = 0;
+            }
+            else{
+                setTimeout(
+                    function() {
+                        fileInfo.getFileTreeOnMainBody(path, context, parent);
+                    },
+                    100
+                );
+                return;
+            }
+        }
 
         //var fs = require("electron").remote.require("fs");
         var fs = require("fs");
