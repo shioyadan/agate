@@ -1,9 +1,7 @@
 
-<tree_map>
-    <div style="width:100%; height:100%;" ref="canvas_holder">
-        <canvas ref="canvas">
-        </canvas>
-    </div>
+<tree_map_canvas>
+    <canvas ref="canvas">
+    </canvas>
 
     <script>
         var self = this;
@@ -13,6 +11,11 @@
 
             // ファイルツリー
             tree: null,
+
+            // 初期化
+            // タグのマウント時に呼ばれるようにする
+            init: function(callback) {
+            },        
 
             //　描画
             draw: function() {
@@ -64,33 +67,11 @@
                         c.fillText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
                     }
                 }
+            }
 
-
-            },
-
-            // リサイズハンドラ
-            onResize: function() {
-                // CSS で指定するとぼける
-                // キャンバスのサイズを無理矢理変更する必要がある
-                var canvas = self.refs.canvas;
-                var canvas_holder = self.refs.canvas_holder;
-                canvas.width = canvas_holder.offsetWidth;
-                // navbar の分を引く
-                canvas.height = canvas_holder.offsetHeight; // - self.tags.app_navbar.getHeight();
-                self.private.draw();
-            },
-
-
-            // 初期化
-            // タグのマウント時に呼ばれるようにする
-            init: function(callback) {
-                // ウィンドウのリサイズハンドラ
-                window.addEventListener("resize", self.private.onResize, false);
-
-                self.private.onResize(); // サイズを適用するために1回呼んどく
-            },        
         };
 
+        // ファイルツリー情報をセット
         self.setTree = function(tree) {
             self.private.tree = tree;
             self.private.draw();
@@ -100,5 +81,12 @@
         // マウント時に初期化を行う
         self.on("mount", self.private.init);
 
+        // サイズを適用
+        self.on("update", function() {
+            var canvas = self.refs.canvas;
+            canvas.width = self.width;
+            canvas.height = self.height;
+            self.private.draw();
+        });
     </script>
-</tree_map>
+</tree_map_canvas>

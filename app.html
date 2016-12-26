@@ -117,7 +117,9 @@
     </app_navbar>
 
     <!-- ツリーマップ-->
-    <tree_map></tree_map>
+    <div style="width:100%; height:100%;" ref="canvas_holder">
+        <tree_map_canvas ref="tree_map_canvas"></tree_map_canvas>
+    </div>
 
     <!-- Notification dialog
         This dialog is not visible in usual.
@@ -159,14 +161,28 @@
                     function(context, tree) {
                         self.app.navTitle = context.count;
 
-                        self.tags.tree_map.setTree(tree);
+                        self.refs.tree_map_canvas.setTree(tree);
                     }
                 );
+            },
+
+            // リサイズハンドラ
+            onResize: function() {
+                // CSS で指定するとぼける
+                // キャンバスのサイズを無理矢理変更する必要がある
+                var canvas = self.refs.tree_map_canvas;
+                var canvas_holder = self.refs.canvas_holder;
+                canvas.width = canvas_holder.offsetWidth;
+                // navbar の分を引く
+                canvas.height = canvas_holder.offsetHeight - self.tags.app_navbar.getHeight();
+                canvas.update();
             },
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function(callback) {
+                window.addEventListener("resize", self.app.onResize, false);
+                self.app.onResize();    // サイズを適用しておくために1回呼んでおく
                 self.app.openFolder();
             },
         };
