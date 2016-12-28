@@ -4,12 +4,15 @@
     </canvas>
 
     <script>
-        /*global treeMap*/ 
+        /*global TreeMap*/ 
 
         let self = this;
 
         
         let private = {
+
+            // ツリーマップ
+            treeMap: TreeMap(),
 
             // ファイルツリー
             tree: null,
@@ -125,7 +128,7 @@
                 let zoom = private.calcZoomRatio(private.zoomLevel);
                 let virtualWidth = 1600 * zoom;
                 let virtualHeight = 900 * zoom;
-                let areas = treeMap.createTreeMap(
+                let areas = private.treeMap.createTreeMap(
                     self.private.tree, 
                     virtualWidth, virtualHeight, 
                     [private.viewPoint[0], private.viewPoint[1], private.viewPoint[0] + width, private.viewPoint[1] + height]
