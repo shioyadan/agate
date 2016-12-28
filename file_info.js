@@ -4,10 +4,10 @@ let fileInfo = {
     // 各ディレクトリが含む合計サイズを計算して適用する
     updateDirectorySize: function(tree) {
         let size = 0;
-        for(let key in tree) {
-            let val = tree[key];
+        for(let key in tree.children) {
+            let val = tree.children[key];
             if (val.isDirectory && val.children) {
-                val.size = fileInfo.updateDirectorySize(val.children);
+                val.size = fileInfo.updateDirectorySize(val);
             }
             size += val.size;
         }
@@ -45,11 +45,11 @@ let fileInfo = {
             finish: false,
             searching: 0,
             searchingDir: 1,
-            tree: {},
+            tree: {children: {}},
             callCount: 0,
         };
 
-        fileInfo.getFileTreeOnMainBody(path, context, context.tree);
+        fileInfo.getFileTreeOnMainBody(path, context, context.tree.children);
     },
         
     // getFileTree の実装
@@ -106,7 +106,8 @@ let fileInfo = {
                         let node = {
                             size: stat.size,
                             isDirectory: stat.isDirectory(),
-                            children: null
+                            children: null,
+                            treeMapCache: null   // ツリーマップのキャッシュに使うスタブ
                         };
                         parent[pathElement] = node;
 

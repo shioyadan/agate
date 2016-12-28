@@ -2,15 +2,74 @@ function TreeMap(){
 
     let self = {
 
-        // 解析済みのバランスツリー
-        binTree: {},
-
         // 初期化
         init: function() {
 
         },
 
+        // バイナリツリーから矩形のリストを再帰的に作成する
+        // binNode: バイナリツリーのノード
+        // areas: 矩形のハッシュ
+        // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
+        createAbstractAreas: function(binNode, areas, rect) {
+
+            if (!binNode.children) {
+                areas[binNode.key] = rect;
+                return;
+            }
+            
+            let left = rect[0];
+            let top = rect[1];
+            let right = rect[2];
+            let bottom = rect[3];
+            let width = right - left;
+            let height = bottom - top;
+            let ratio = 
+                1.0 * 
+                binNode.children[0].size / 
+                (binNode.children[0].size + binNode.children[1].size);
+
+            // 長い辺の方を分割
+            let divided = 
+                (width > height) ?
+                [
+                    [left, top, left + width*ratio, bottom],
+                    [left + width*ratio, top, right, bottom],
+                ] :
+                [
+                    [left, top, right, top + height*ratio],
+                    [left, top + height*ratio, right, bottom],
+                ];
+            self.createAbstractAreas(binNode.children[0], areas, divided[0]);
+            self.createAbstractAreas(binNode.children[1], areas, divided[1]);
+
+        },
+
+
+        // キャッシュされたバイナリツリーを得る
+        getCachedDivTree: function(fileTree) {
+/*
+                // 連鎖的に下位の情報を構築していくため，最上位以外でここにくることはない
+                fileTree.treeMapCache = {
+                    areas: null,
+                    rect: [0, 0, 1.0, 1.0]
+                };
+*/
+
+            if (!fileTree.treeMapCache) {
+                let divTree = self.makeBinTree(fileTree.children);
+                let areas = {};
+                self.createAbstractAreas(divTree, areas, [0, 0, 1.0, 1.0]);
+                fileTree.treeMapCache = {
+                    areas: areas,
+                    rect: [0, 0, 0, 0]
+                };
+            }
+            return fileTree.treeMapCache;
+        },
+
         // tree からバイナリツリーを作る
+        // このバイナリツリーはあるフォルダの中のファイルの分割方法を表す．
         // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
         // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
         // が小さくなる･･･ と思う
@@ -40,7 +99,7 @@ function TreeMap(){
                     node.size = fileInfo[fileNames[0]].size;
                     node.key = fileNames[0];
                     node.children = null;
-                    node.fileInfoChildren = fileInfo[fileNames[0]].children;
+                    node.fileInfoChildren = fileInfo[fileNames[0]];
                     return;
                 }
 
@@ -125,14 +184,25 @@ function TreeMap(){
             let wholeAreas = [];
 
             let parentAreas = [];
-            let parentBinTree = self.makeBinTree(fileTree);
-            self.createAreas(parentBinTree, parentAreas, [0, 0, width, height], 0);
+
+            let cache = self.getCachedDivTree(fileTree);
+            for (let key in cache.areas) {
+                let r = cache.areas[key];
+                parentAreas.push({
+                    key: key,
+                    fileInfoChildren: fileTree.children[key],
+                    rect: [r[0]*width, r[1]*height, r[2]*width, r[3]*height],
+                    level: 0
+                });
+            }
+
             wholeAreas = wholeAreas.concat(parentAreas);
+
 
             for (let j = 1; j < 100; j++) {
                 let areas = [];
                 for (let a of parentAreas) {
-                    if (a.fileInfoChildren) {
+                    if (a.fileInfoChildren.children) {
                         let r = [
                             a.rect[0] + 10,
                             a.rect[1] + 30,
@@ -148,8 +218,19 @@ function TreeMap(){
 
                         // 一定以上の大きさなら探索
                         if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
-                            let binTree = self.makeBinTree(a.fileInfoChildren);
-                            self.createAreas(binTree, areas, r, j);
+                            let width = r[2] - r[0];
+                            let height = r[3] - r[1];
+
+                            let cache = self.getCachedDivTree(a.fileInfoChildren);
+                            for (let key in cache.areas) {
+                                let cr = cache.areas[key];
+                                areas.push({
+                                    key: key,
+                                    fileInfoChildren: a.fileInfoChildren.children[key],
+                                    rect: [r[0]+cr[0]*width, r[1]+cr[1]*height, r[0]+cr[2]*width, r[1]+cr[3]*height],
+                                    level: j
+                                });
+                            }
                         }
                     }
                 }
@@ -167,6 +248,8 @@ function TreeMap(){
         }
     };
 
+    // 初期化
+    self.init();
     return self;
 
 }
