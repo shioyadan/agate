@@ -160,34 +160,51 @@ function TreeMap(baseAspectX, baseAspectY){
         // 描画領域の作成
         createTreeMap: function(fileTree, baseWidth, baseHeight, clipRect) {
 
-            let wholeAreas = [];
-            let parentAreas = [];
-            let cache = self.getDivTree(fileTree);
-            let curLevelNodes = [];
 
-            for (let key in cache.areas) {
-                let b = cache.areas[key];
-                let r = [b[0]*baseWidth, b[1]*baseHeight, b[2]*baseWidth, b[3]*baseHeight];
-                // 範囲外なら，これ以上は探索しない
-                if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
-                    r[1] > clipRect[3] || r[3] < clipRect[1]) {
-                    continue;
+            function traverse(fileTree, areas, nextNodes, baseRect, level) {
+                let cache = self.getDivTree(fileTree);
+                let width = baseRect[2] - baseRect[0];
+                let height = baseRect[3] - baseRect[1];
+
+                for (let key in cache.areas) {
+                    let ar = cache.areas[key];
+
+                    let r = [
+                        baseRect[0] + ar[0] * width, 
+                        baseRect[1] + ar[1] * height, 
+                        baseRect[0] + ar[2] * width, 
+                        baseRect[1] + ar[3] * height
+                    ];
+
+                    // 範囲外なら，これ以上は探索しない
+                    if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
+                        r[1] > clipRect[3] || r[3] < clipRect[1]) {
+                        continue;
+                    }
+                    if (r[2] - r[0] < 40 || r[3] - r[1] < 40){
+                        continue;
+                    }
+                    areas.push({
+                        key: key,
+                        rect: r,
+                        level: level
+                    });
+                    nextNodes.push({
+                        fileNode: fileTree.children[key],
+                        rect: r
+                    });
                 }
-                parentAreas.push({
-                    key: key,
-                    rect: r,
-                    level: 0
-                });
-                curLevelNodes.push({
-                    fileNode: fileTree.children[key],
-                    rect: r
-                });
+
             }
 
-            wholeAreas = wholeAreas.concat(parentAreas);
+            let wholeAreas = [];
+            let areas = [];
+            let curLevelNodes = [];
 
+            traverse(fileTree, areas, curLevelNodes, [0, 0, baseWidth, baseHeight], 0);
+            wholeAreas = wholeAreas.concat(areas);
 
-            for (let j = 1; j < 100; j++) {
+            for (let level = 1; level < 100; level++) {
                 let areas = [];
                 let nextLevelNodes = [];
                 for (let n of curLevelNodes) {
@@ -199,49 +216,20 @@ function TreeMap(baseAspectX, baseAspectY){
                             n.rect[3] - 10,
                         ];
 
-                        // 範囲外なら，これ以上は探索しない
-                        if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
-                            r[1] > clipRect[3] || r[3] < clipRect[1]) {
-                            continue;
-                        }
-
                         // 一定以上の大きさなら探索
-                        let width = r[2] - r[0];
-                        let height = r[3] - r[1];
-                        if (width > 40 && height > 40){
-
-                            let cache = self.getDivTree(n.fileNode);
-                            for (let key in cache.areas) {
-                                let br = cache.areas[key];
-                                let rr = [
-                                    r[0]+br[0]*width, 
-                                    r[1]+br[1]*height, 
-                                    r[0]+br[2]*width, 
-                                    r[1]+br[3]*height
-                                ];
-
-                                nextLevelNodes.push({
-                                    fileNode: n.fileNode.children[key],
-                                    rect: rr
-                                });
-
-                                areas.push({
-                                    key: key,
-                                    rect: rr,
-                                    level: j
-                                });
-                            }
+                        if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+                            traverse(n.fileNode, areas, nextLevelNodes, r, level);
                         }
                     }
                 }
                 curLevelNodes = nextLevelNodes;
 
                 // 新規追加エリアがないので抜ける
-                if (areas.length == 0) {
+                if (nextLevelNodes.length == 0) {
                     break;
                 }
+
                 wholeAreas = wholeAreas.concat(areas);
-                parentAreas = areas;
             }
 
             return wholeAreas;
