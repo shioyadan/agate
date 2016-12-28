@@ -15,10 +15,20 @@
             tree: null,
 
             // 表示系
-            zoomLevel: 0,
-            viewPoint: [0, 0],
-            inDrag: false,
-            prevMousePoint: [0, 0],
+            zoomLevel: 0,   // 拡大率
+            viewPoint: [0, 0],  // 仮想座標上における表示領域の左上の座標
+
+            // ズームのアニメーション
+            inZoomAnimation: false,
+            zoomEndLevel: 0,
+            zoomBasePoint: [0, 0],
+            zoomAnimationID: 0,
+            zoomAnimationDirection: false,
+
+            // マウスのドラッグ
+            inDrag: false,  // マウスでドラッグ中か
+            prevMousePoint: [0, 0], // 前回のマウスポインタの位置
+
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
@@ -33,25 +43,52 @@
 
             // 拡大率
             calcZoomRatio: function(level) {
-                return Math.pow(1.2, level);
+                return Math.pow(1.3, level);
             },
 
-            // マウスホイール操作
-            onMouseWheel: function(e) {
-                let newZoomLevel = private.zoomLevel + ((e.deltaY < 0) ? 1 : -1);
+            //
+            setZoomLevel: function(newZoomLevel, offsetX, offsetY) {
                 let newZoomRatio = private.calcZoomRatio(newZoomLevel);
                 let oldZoomRatio = private.calcZoomRatio(private.zoomLevel);
 
                 // ポインタの位置が拡大の前後で同じ位置を指すように変換
-                let newAbsPosX = (e.offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
-                let newAbsPosY = (e.offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
+                let newAbsPosX = (offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
+                let newAbsPosY = (offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
 
                 // そこからマウスポインタの位置を引いて，左上の座標を決定
-                private.viewPoint[0] = newAbsPosX - e.offsetX;
-                private.viewPoint[1] = newAbsPosY - e.offsetY;
+                private.viewPoint[0] = newAbsPosX - offsetX;
+                private.viewPoint[1] = newAbsPosY - offsetY;
                 
                 private.zoomLevel = newZoomLevel;
+            },
+
+            animateZoom: function() {
+                if (!private.inZoomAnimation) {
+                    return;
+                }
+
+                let newZoomLevel = private.zoomLevel + (private.zoomAnimationDirection ? 0.1 : -0.1);
+                private.setZoomLevel(
+                    newZoomLevel, private.zoomBasePoint[0], private.zoomBasePoint[1]
+                );
                 private.draw();
+                if ((private.zoomAnimationDirection && newZoomLevel > private.zoomEndLevel) ||
+                    (!private.zoomAnimationDirection && newZoomLevel < private.zoomEndLevel)){
+                    private.inZoomAnimation = false;
+                    clearInterval(private.zoomAnimationID);
+                }
+            },
+
+            // マウスホイール操作
+            onMouseWheel: function(e) {
+                if (!private.inZoomAnimation) {
+                    private.zoomAnimationDirection = (e.deltaY < 0);
+                    private.zoomBasePoint = [e.offsetX, e.offsetY];
+                    private.zoomEndLevel = 
+                        private.zoomLevel + (private.zoomAnimationDirection ? 1.5 : -1.5);
+                    private.inZoomAnimation = true;
+                    private.zoomAnimationID = setInterval(private.animateZoom, 16);
+                }
             },
 
             // マウス移動
@@ -126,12 +163,13 @@
                         return true;
                     }
                 });
+
                 /*
                 areas = areas.map(function(a) {
-                    if (a.rect[0] < 0) { a.rect[0] = -5; }
-                    if (a.rect[1] < 0) { a.rect[1] = -5; }
-                    if (a.rect[2] > width) { a.rect[2] = width+5; }
-                    if (a.rect[3] > height) { a.rect[3] = height+5; }
+                    if (a.rect[0] < 0) { a.rect[0] = -50; }
+                    if (a.rect[1] < 0) { a.rect[1] = -50; }
+                    if (a.rect[2] > width) { a.rect[2] = width+50; }
+                    if (a.rect[3] > height) { a.rect[3] = height+50; }
                     return a;
                 });
                 */

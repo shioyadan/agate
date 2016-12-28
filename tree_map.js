@@ -6,14 +6,18 @@ let treeMap = {
     makeBinTree: function(tree) {
         // tree 直下のファイル/ディレクトリのサイズでソート
         let keys = Object.keys(tree);
-        keys.sort(function(a, b) {
-            if (tree[a].size > tree[b].size) return -1;
-            if (tree[a].size < tree[b].size) return 1;
-            return 0;
-        });
+
         keys = keys.filter(function(key) {
             // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
             return !(tree[key].size < 1);
+        });
+
+        keys.sort(function(a, b) {
+            let sizeA = tree[a].size;
+            let sizeB = tree[b].size;
+            if (sizeA > sizeB) return -1;
+            if (sizeA < sizeB) return 1;
+            return 0;
         });
 
         // 再帰的にツリーを作成
@@ -90,7 +94,7 @@ let treeMap = {
 
         // 長い辺の方を分割
         let divided = 
-            (Math.ceil(width/10) > Math.ceil(height/10)) ?
+            (width > height) ?
             [
                 [left, top, left + width*ratio, bottom],
                 [left + width*ratio, top, right, bottom],
@@ -118,7 +122,6 @@ let treeMap = {
             let areas = [];
             for (let a of parentAreas) {
                 if (a.fileInfoChildren) {
-                    let binTree = treeMap.makeBinTree(a.fileInfoChildren);
                     let r = [
                         a.rect[0] + 10,
                         a.rect[1] + 30,
@@ -134,6 +137,7 @@ let treeMap = {
 
                     // 一定以上の大きさなら探索
                     if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+                        let binTree = treeMap.makeBinTree(a.fileInfoChildren);
                         treeMap.createAreas(binTree, areas, r, j);
                     }
                 }
