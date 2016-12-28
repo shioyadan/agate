@@ -163,13 +163,24 @@ function TreeMap(baseAspectX, baseAspectY){
             let wholeAreas = [];
             let parentAreas = [];
             let cache = self.getDivTree(fileTree);
+            let curLevelNodes = [];
+
             for (let key in cache.areas) {
-                let r = cache.areas[key];
+                let b = cache.areas[key];
+                let r = [b[0]*baseWidth, b[1]*baseHeight, b[2]*baseWidth, b[3]*baseHeight];
+                // 範囲外なら，これ以上は探索しない
+                if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
+                    r[1] > clipRect[3] || r[3] < clipRect[1]) {
+                    continue;
+                }
                 parentAreas.push({
                     key: key,
-                    fileNode: fileTree.children[key],
-                    rect: [r[0]*baseWidth, r[1]*baseHeight, r[2]*baseWidth, r[3]*baseHeight],
+                    rect: r,
                     level: 0
+                });
+                curLevelNodes.push({
+                    fileNode: fileTree.children[key],
+                    rect: r
                 });
             }
 
@@ -178,13 +189,14 @@ function TreeMap(baseAspectX, baseAspectY){
 
             for (let j = 1; j < 100; j++) {
                 let areas = [];
-                for (let a of parentAreas) {
-                    if (a.fileNode.children) {
+                let nextLevelNodes = [];
+                for (let n of curLevelNodes) {
+                    if (n.fileNode.children) {
                         let r = [
-                            a.rect[0] + 10,
-                            a.rect[1] + 30,
-                            a.rect[2] - 10,
-                            a.rect[3] - 10,
+                            n.rect[0] + 10,
+                            n.rect[1] + 30,
+                            n.rect[2] - 10,
+                            n.rect[3] - 10,
                         ];
 
                         // 範囲外なら，これ以上は探索しない
@@ -198,7 +210,7 @@ function TreeMap(baseAspectX, baseAspectY){
                         let height = r[3] - r[1];
                         if (width > 40 && height > 40){
 
-                            let cache = self.getDivTree(a.fileNode);
+                            let cache = self.getDivTree(n.fileNode);
                             for (let key in cache.areas) {
                                 let br = cache.areas[key];
                                 let rr = [
@@ -208,9 +220,13 @@ function TreeMap(baseAspectX, baseAspectY){
                                     r[1]+br[3]*height
                                 ];
 
+                                nextLevelNodes.push({
+                                    fileNode: n.fileNode.children[key],
+                                    rect: rr
+                                });
+
                                 areas.push({
                                     key: key,
-                                    fileNode: a.fileNode.children[key],
                                     rect: rr,
                                     level: j
                                 });
@@ -218,6 +234,7 @@ function TreeMap(baseAspectX, baseAspectY){
                         }
                     }
                 }
+                curLevelNodes = nextLevelNodes;
 
                 // 新規追加エリアがないので抜ける
                 if (areas.length == 0) {

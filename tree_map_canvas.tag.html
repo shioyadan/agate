@@ -178,11 +178,15 @@
                 });
                 */
 
+                let prevLevel = -1;
                 for (let a of areas) {
                     let rect = a.rect;
                     
                     // レベルに応じた色にする
-                    c.fillStyle = fillStyle[a.level];
+                    if (prevLevel != a.level) {
+                        c.fillStyle = fillStyle[a.level];
+                        prevLevel = a.level;
+                    }
                     /*
                     if (!a.fileNode.children) {
                         c.fillStyle = fillFileStyle;
@@ -191,30 +195,48 @@
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
+                prevLevel = -1;
                 for (let a of areas) {
                     let rect = a.rect;
-                    // 枠線の太さもレベルに応じる
-                    c.lineWidth = Math.max(2 - a.level/2, 0.5); 
-                    // 枠線の色は，基準色から明度をおとしたものに
-                    c.strokeStyle = strokeStyle[a.level];
+
+                    if (prevLevel != a.level) {
+                        // 枠線の太さもレベルに応じる
+                        c.lineWidth = Math.max(2 - a.level/2, 0.5); 
+                        // 枠線の色は，基準色から明度をおとしたものに
+                        c.strokeStyle = strokeStyle[a.level];
+                        prevLevel = a.level;
+                    }
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
-                for (let i = 0; i < areas.length; i++) {
-                    let rect = areas[i].rect;
+                c.font = "bold 15px Century Gothic";
 
+                // 1回太めに文字の枠線を書く
+                c.lineWidth = 4; 
+                prevLevel = -1;
+                for (let a of areas) {
+                    let rect = a.rect;
+                    if (prevLevel != a.level) {
+                        c.strokeStyle = strokeStyle[a.level];
+                        prevLevel = a.level;
+                    }
                     // 文字領域が確保できた場合は描画
                     if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
+                        c.strokeText(a.key, Math.max(0, rect[0]) + 5, rect[1] + 15 + 5);
+                    }
+                }
 
-                        // 1回太めに文字の枠線を書く
-                        c.font = "bold 15px Century Gothic";
-                        c.lineWidth = 4; 
-                        c.strokeStyle = strokeStyle[areas[i].level];
-                        c.strokeText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
-
-                        // 次に白を重ねて書く
+                // 次に白を重ねて書く
+                c.fillStyle = "rgb(255,255,255)";
+                for (let a of areas) {
+                    let rect = a.rect;
+                    // 文字領域が確保できた場合は描画
+                    if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
+                        if (rect[0] < 0) {
+                            rect[0] = 0;
+                        }
                         c.fillStyle = "rgb(255,255,255)";
-                        c.fillText(areas[i].key, rect[0] + 5, rect[1] + 15 + 5);
+                        c.fillText(a.key, Math.max(0, rect[0]) + 5, rect[1] + 15 + 5);
                     }
                 }
             }
