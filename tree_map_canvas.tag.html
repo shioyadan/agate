@@ -12,7 +12,7 @@
         let private = {
 
             // ツリーマップ
-            treeMap: TreeMap(),
+            treeMap: TreeMap(1600, 900),
 
             // ファイルツリー
             tree: null,
@@ -135,7 +135,7 @@
                 );
 
                 let fillStyle = [];
-                let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
+                //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
                 let strokeStyle = [];
                 for (let i = 0; i < 10; i++) {
                     fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
@@ -184,7 +184,7 @@
                     // レベルに応じた色にする
                     c.fillStyle = fillStyle[a.level];
                     /*
-                    if (!a.fileInfoChildren.children) {
+                    if (!a.fileNode.children) {
                         c.fillStyle = fillFileStyle;
                     }
                     */

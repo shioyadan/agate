@@ -1,4 +1,8 @@
-function TreeMap(){
+//
+// baseAspectX/baseAspectY: 生成するツリーマップ絶対のアスペクト比
+//
+
+function TreeMap(baseAspectX, baseAspectY){
 
     let self = {
 
@@ -7,74 +11,41 @@ function TreeMap(){
 
         },
 
-        // バイナリツリーから矩形のリストを再帰的に作成する
-        // binNode: バイナリツリーのノード
-        // areas: 矩形のハッシュ
-        // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
-        createAbstractAreas: function(binNode, areas, rect) {
-
-            if (!binNode.children) {
-                areas[binNode.key] = rect;
-                return;
-            }
-            
-            let left = rect[0];
-            let top = rect[1];
-            let right = rect[2];
-            let bottom = rect[3];
-            let width = right - left;
-            let height = bottom - top;
-            let ratio = 
-                1.0 * 
-                binNode.children[0].size / 
-                (binNode.children[0].size + binNode.children[1].size);
-
-            // 長い辺の方を分割
-            let divided = 
-                (width * 1.02 > height) ?
-                [
-                    [left, top, left + width*ratio, bottom],
-                    [left + width*ratio, top, right, bottom],
-                ] :
-                [
-                    [left, top, right, top + height*ratio],
-                    [left, top + height*ratio, right, bottom],
-                ];
-            self.createAbstractAreas(binNode.children[0], areas, divided[0]);
-            self.createAbstractAreas(binNode.children[1], areas, divided[1]);
-
-        },
-
-
         // キャッシュされたバイナリツリーを得る
-        getCachedDivTree: function(fileTree) {
+        // キャッシュは fileTree 内部に直に保持される
+        getDivTree: function(fileTree) {
 
             // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
             if (!fileTree.treeMapCache) {
                 fileTree.treeMapCache = {
                     areas: null,
-                    rect: [0, 0, 1.6, 0.9]
+                    rect: [0, 0, baseAspectX, baseAspectY]
                 };
             }
 
+            // area が未生成の場合，ここで生成
             if (!fileTree.treeMapCache.areas) {
-                let divTree = self.makeBinTree(fileTree.children);
+                let divTree = self.makeDivTree(fileTree.children);
+
                 let areas = {};
-                self.createAbstractAreas(divTree, areas, fileTree.treeMapCache.rect);
+                let baseRect = fileTree.treeMapCache.rect;
+                self.divideRects(divTree, areas, baseRect);
 
                 fileTree.treeMapCache.areas = areas;
                 for (let key in areas) {
                     let r = areas[key];
+
+                    // 子階層に縦横比を伝える
                     fileTree.children[key].treeMapCache = {
                         rect: [0, 0, r[2] - r[0], r[3] - r[1]],
                         areas: null
                     };
 
-                    // 正規化
-                    areas[key][0] /= fileTree.treeMapCache.rect[2] - fileTree.treeMapCache.rect[0];
-                    areas[key][1] /= fileTree.treeMapCache.rect[3] - fileTree.treeMapCache.rect[1];
-                    areas[key][2] /= fileTree.treeMapCache.rect[2] - fileTree.treeMapCache.rect[0];
-                    areas[key][3] /= fileTree.treeMapCache.rect[3] - fileTree.treeMapCache.rect[1];
+                    // 縦横それぞれ0 から 1.0 に正規化して保存
+                    areas[key][0] /= baseRect[2] - baseRect[0];
+                    areas[key][1] /= baseRect[3] - baseRect[1];
+                    areas[key][2] /= baseRect[2] - baseRect[0];
+                    areas[key][3] /= baseRect[3] - baseRect[1];
                 }
             }
             return fileTree.treeMapCache;
@@ -85,15 +56,15 @@ function TreeMap(){
         // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
         // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
         // が小さくなる･･･ と思う
-        makeBinTree: function(tree) {
-            // tree 直下のファイル/ディレクトリのサイズでソート
+        makeDivTree: function(tree) {
             let keys = Object.keys(tree);
 
+            // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
             keys = keys.filter(function(key) {
-                // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
                 return !(tree[key].size < 1);
             });
 
+            // tree 直下のファイル/ディレクトリのサイズでソート
             keys.sort(function(a, b) {
                 let sizeA = tree[a].size;
                 let sizeB = tree[b].size;
@@ -104,14 +75,14 @@ function TreeMap(){
 
             // 再帰的にツリーを作成
             // 渡された node の中身を書き換える必要があるので注意
-            function makeBinNode(node, fileNames, fileInfo) {
+            function makeDivNode(node, fileNames, fileInfo) {
 
                 // 末端
                 if (fileNames.length <= 1) {
                     node.size = fileInfo[fileNames[0]].size;
                     node.key = fileNames[0];
                     node.children = null;
-                    node.fileInfoChildren = fileInfo[fileNames[0]];
+                    node.fileNode = fileInfo[fileNames[0]];
                     return;
                 }
 
@@ -136,30 +107,26 @@ function TreeMap(){
                 node.size = leftSize + rightSize;
                 node.children = [{},{}];
                 node.key = "";
-                node.fileInfoChildren = null;
+                node.fileNode = null;
 
-                makeBinNode(node.children[0], left, fileInfo);
-                makeBinNode(node.children[1], right, fileInfo);
+                makeDivNode(node.children[0], left, fileInfo);
+                makeDivNode(node.children[1], right, fileInfo);
             }
 
-            let binTree = {};
-            makeBinNode(binTree, keys, tree);
-            return binTree;
+            let divTree = {};
+            makeDivNode(divTree, keys, tree);
+            return divTree;
         },
 
-        // バイナリツリーから矩形のリストを再帰的に作成する
-        // binNode: バイナリツリーのノード
-        // areas: 矩形のリスト
-        // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
-        createAreas: function(binNode, areas, rect, level) {
 
-            if (!binNode.children) {
-                areas.push({
-                    key: binNode.key,
-                    fileInfoChildren: binNode.fileInfoChildren,
-                    rect: rect,
-                    level: level
-                });
+        // バイナリツリーから矩形のリストを再帰的に作成する
+        // divNode: バイナリツリーのノード
+        // divided: 分割結果の矩形のハッシュ
+        // rect: 分割対象の矩形．これを binNode に従い再帰的に分割
+        divideRects: function(divNode, divided, rect) {
+
+            if (!divNode.children) {
+                divided[divNode.key] = rect;
                 return;
             }
             
@@ -171,12 +138,12 @@ function TreeMap(){
             let height = bottom - top;
             let ratio = 
                 1.0 * 
-                binNode.children[0].size / 
-                (binNode.children[0].size + binNode.children[1].size);
+                divNode.children[0].size / 
+                (divNode.children[0].size + divNode.children[1].size);
 
             // 長い辺の方を分割
-            let divided = 
-                (width > height) ?
+            let result = 
+                (width * 1.02 > height) ?   // ラベルを考慮して少しだけ縦長に
                 [
                     [left, top, left + width*ratio, bottom],
                     [left + width*ratio, top, right, bottom],
@@ -185,25 +152,23 @@ function TreeMap(){
                     [left, top, right, top + height*ratio],
                     [left, top + height*ratio, right, bottom],
                 ];
-            self.createAreas(binNode.children[0], areas, divided[0], level);
-            self.createAreas(binNode.children[1], areas, divided[1], level);
+            self.divideRects(divNode.children[0], divided, result[0]);
+            self.divideRects(divNode.children[1], divided, result[1]);
 
         },
 
         // 描画領域の作成
-        createTreeMap: function(fileTree, width, height, clipRect) {
+        createTreeMap: function(fileTree, baseWidth, baseHeight, clipRect) {
 
             let wholeAreas = [];
-
             let parentAreas = [];
-
-            let cache = self.getCachedDivTree(fileTree);
+            let cache = self.getDivTree(fileTree);
             for (let key in cache.areas) {
                 let r = cache.areas[key];
                 parentAreas.push({
                     key: key,
-                    fileInfoChildren: fileTree.children[key],
-                    rect: [r[0]*width, r[1]*height, r[2]*width, r[3]*height],
+                    fileNode: fileTree.children[key],
+                    rect: [r[0]*baseWidth, r[1]*baseHeight, r[2]*baseWidth, r[3]*baseHeight],
                     level: 0
                 });
             }
@@ -214,7 +179,7 @@ function TreeMap(){
             for (let j = 1; j < 100; j++) {
                 let areas = [];
                 for (let a of parentAreas) {
-                    if (a.fileInfoChildren.children) {
+                    if (a.fileNode.children) {
                         let r = [
                             a.rect[0] + 10,
                             a.rect[1] + 30,
@@ -229,18 +194,24 @@ function TreeMap(){
                         }
 
                         // 一定以上の大きさなら探索
-                        if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+                        let width = r[2] - r[0];
+                        let height = r[3] - r[1];
+                        if (width > 40 && height > 40){
 
-                            let width = r[2] - r[0];
-                            let height = r[3] - r[1];
-                            let cache = self.getCachedDivTree(a.fileInfoChildren);
+                            let cache = self.getDivTree(a.fileNode);
                             for (let key in cache.areas) {
-                                let cr = cache.areas[key];
+                                let br = cache.areas[key];
+                                let rr = [
+                                    r[0]+br[0]*width, 
+                                    r[1]+br[1]*height, 
+                                    r[0]+br[2]*width, 
+                                    r[1]+br[3]*height
+                                ];
 
                                 areas.push({
                                     key: key,
-                                    fileInfoChildren: a.fileInfoChildren.children[key],
-                                    rect: [r[0]+cr[0]*width, r[1]+cr[1]*height, r[0]+cr[2]*width, r[1]+cr[3]*height],
+                                    fileNode: a.fileNode.children[key],
+                                    rect: rr,
                                     level: j
                                 });
                             }
