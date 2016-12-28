@@ -8,11 +8,13 @@
 
         let self = this;
 
+        let FONT_FIZE = 15;
+        let MERGIN = [8, 8 + FONT_FIZE, -8, -8];
         
         let private = {
 
             // ツリーマップ
-            treeMap: TreeMap(1600, 900),
+            treeMap: TreeMap(1600, 900, MERGIN),
 
             // ファイルツリー
             tree: null,
@@ -133,22 +135,6 @@
                     virtualWidth, virtualHeight, 
                     [private.viewPoint[0], private.viewPoint[1], private.viewPoint[0] + width, private.viewPoint[1] + height]
                 );
-
-                let fillStyle = [];
-                //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
-                let strokeStyle = [];
-                for (let i = 0; i < 10; i++) {
-                    fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
-                    strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
-                }
-
-                let c = canvas.getContext("2d");
-
-                //c.clearRect(0, 0, width, height);
-                c.fillStyle = "rgb(200,200,200)";
-                c.fillRect(0, 0, width, height);
-
-
                 // ビューポートの場所に更新
                 for (let a of areas) {
                     a.rect[0] -= private.viewPoint[0];
@@ -157,86 +143,108 @@
                     a.rect[3] -= private.viewPoint[1];
                 }
 
-                // 範囲外のオブジェクトを排除
-                areas = areas.filter(function(a) {
-                    if (a.rect[0] > width || a.rect[2] < 0 || 
-                        a.rect[1] > height || a.rect[3] < 0) {
-                        return false;
-                    }
-                    else {
-                        return true;
-                    }
-                });
+                let fillStyle = [];
+                //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
+                let strokeStyle = [];
+                for (let i = 0; i < 10; i++) {
+                    fillStyle.push("hsl(" + ((120+i*30)%360) + ", 40%, 70%)");
+                    strokeStyle.push("hsl(" + ((120+i*30)%360) + ", 20%, 40%)");
+                }
 
-                /*
-                areas = areas.map(function(a) {
-                    if (a.rect[0] < 0) { a.rect[0] = -50; }
-                    if (a.rect[1] < 0) { a.rect[1] = -50; }
-                    if (a.rect[2] > width) { a.rect[2] = width+50; }
-                    if (a.rect[3] > height) { a.rect[3] = height+50; }
-                    return a;
-                });
-                */
+                let c = canvas.getContext("2d");
+
+                c.fillStyle = "rgb(200,200,200)";
+                c.fillRect(0, 0, width, height);
+
 
                 let prevLevel = -1;
                 for (let a of areas) {
                     let rect = a.rect;
-                    
                     // レベルに応じた色にする
                     if (prevLevel != a.level) {
                         c.fillStyle = fillStyle[a.level];
                         prevLevel = a.level;
                     }
-                    /*
-                    if (!a.fileNode.children) {
-                        c.fillStyle = fillFileStyle;
-                    }
-                    */
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
                 prevLevel = -1;
                 for (let a of areas) {
                     let rect = a.rect;
-
                     if (prevLevel != a.level) {
                         // 枠線の太さもレベルに応じる
-                        c.lineWidth = Math.max(2 - a.level/2, 0.5); 
+                        //c.lineWidth = Math.max(2 - a.level/2, 0.5); 
+                        c.lineWidth = 1; 
                         // 枠線の色は，基準色から明度をおとしたものに
                         c.strokeStyle = strokeStyle[a.level];
                         prevLevel = a.level;
                     }
+                    if (!a.fileNode.children) {
+                        c.lineWidth = 2; 
+                        prevLevel = -1;
+                    }
                     c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
-                c.font = "bold 15px Century Gothic";
+
+                function sizeToStr(size) {
+                    if (size > 1024*1024) {
+                        return "" + Math.ceil(size/1024/1024) + " MB";
+                    }
+                    else if (size > 1024) {
+                        return "" + Math.ceil(size/1024) + " KB";
+                    }
+                    else {
+                        return "" + size + " B";
+                    }
+                }
+
+                // 文字領域が確保できた場合は描画
+                let strAreas = areas.filter(function(a){
+                    let rect = a.rect;
+                    return (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40);
+                });
 
                 // 1回太めに文字の枠線を書く
+                c.font = "bold " + FONT_FIZE + "px Century Gothic";
                 c.lineWidth = 4; 
                 prevLevel = -1;
-                for (let a of areas) {
+
+                for (let a of strAreas) {
                     let rect = a.rect;
                     if (prevLevel != a.level) {
                         c.strokeStyle = strokeStyle[a.level];
                         prevLevel = a.level;
                     }
-                    // 文字領域が確保できた場合は描画
-                    if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
-                        c.strokeText(a.key, Math.max(0, rect[0]) + 5, rect[1] + 15 + 5);
+                    let pos = [Math.max(0, rect[0]) + MERGIN[0]/2, rect[1] + FONT_FIZE];
+
+                    if (!a.fileNode.children) {
+                        // ファイル
+                        pos[0] += 10;
+                        pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
+                    }
+                    c.strokeText(a.key, pos[0], pos[1]);
+
+                    if (!a.fileNode.children) {
+                        c.strokeText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
                     }
                 }
 
                 // 次に白を重ねて書く
                 c.fillStyle = "rgb(255,255,255)";
-                for (let a of areas) {
+                for (let a of strAreas) {
                     let rect = a.rect;
-                    // 文字領域が確保できた場合は描画
-                    if (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40) {
-                        if (rect[0] < 0) {
-                            rect[0] = 0;
-                        }
-                        c.fillStyle = "rgb(255,255,255)";
-                        c.fillText(a.key, Math.max(0, rect[0]) + 5, rect[1] + 15 + 5);
+                    let pos = [Math.max(0, rect[0]) + MERGIN[0]/2, rect[1] + FONT_FIZE];
+                    if (!a.fileNode.children) {
+                        // ファイル
+                        pos[0] += 10;
+                        pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
+                    }
+
+                    c.fillText(a.key, pos[0], pos[1]);
+
+                    if (!a.fileNode.children) {
+                        c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
                     }
                 }
             }

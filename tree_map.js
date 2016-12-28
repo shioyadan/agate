@@ -2,7 +2,7 @@
 // baseAspectX/baseAspectY: 生成するツリーマップ絶対のアスペクト比
 //
 
-function TreeMap(baseAspectX, baseAspectY){
+function TreeMap(baseAspectX, baseAspectY, mergin){
 
     let self = {
 
@@ -161,7 +161,7 @@ function TreeMap(baseAspectX, baseAspectY){
         createTreeMap: function(fileTree, baseWidth, baseHeight, clipRect) {
 
 
-            function traverse(fileTree, areas, nextNodes, baseRect, level) {
+            function traverse(fileTree, areas, baseRect, level) {
                 let cache = self.getDivTree(fileTree);
                 let width = baseRect[2] - baseRect[0];
                 let height = baseRect[3] - baseRect[1];
@@ -181,55 +181,49 @@ function TreeMap(baseAspectX, baseAspectY){
                         r[1] > clipRect[3] || r[3] < clipRect[1]) {
                         continue;
                     }
-                    if (r[2] - r[0] < 40 || r[3] - r[1] < 40){
-                        continue;
-                    }
+                    //if (r[2] - r[0] < 40 || r[3] - r[1] < 40){
+                    //    continue;
+                    //}
                     areas.push({
                         key: key,
                         rect: r,
-                        level: level
-                    });
-                    nextNodes.push({
-                        fileNode: fileTree.children[key],
-                        rect: r
+                        level: level,
+                        fileNode: fileTree.children[key]
                     });
                 }
 
             }
 
             let wholeAreas = [];
-            let areas = [];
-            let curLevelNodes = [];
-
-            traverse(fileTree, areas, curLevelNodes, [0, 0, baseWidth, baseHeight], 0);
-            wholeAreas = wholeAreas.concat(areas);
+            let curAreas = [];
+            traverse(fileTree, curAreas, [0, 0, baseWidth, baseHeight], 0);
+            wholeAreas = wholeAreas.concat(curAreas);
 
             for (let level = 1; level < 100; level++) {
-                let areas = [];
-                let nextLevelNodes = [];
-                for (let n of curLevelNodes) {
-                    if (n.fileNode.children) {
+                let nextAreas = [];
+                for (let a of curAreas) {
+                    if (a.fileNode.children) {
                         let r = [
-                            n.rect[0] + 10,
-                            n.rect[1] + 30,
-                            n.rect[2] - 10,
-                            n.rect[3] - 10,
+                            a.rect[0] + mergin[0],
+                            a.rect[1] + mergin[1],
+                            a.rect[2] + mergin[2],
+                            a.rect[3] + mergin[3],
                         ];
 
                         // 一定以上の大きさなら探索
                         if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
-                            traverse(n.fileNode, areas, nextLevelNodes, r, level);
+                            traverse(a.fileNode, nextAreas, r, level);
                         }
                     }
                 }
-                curLevelNodes = nextLevelNodes;
+                curAreas = nextAreas;
 
                 // 新規追加エリアがないので抜ける
-                if (nextLevelNodes.length == 0) {
+                if (nextAreas.length == 0) {
                     break;
                 }
 
-                wholeAreas = wholeAreas.concat(areas);
+                wholeAreas = wholeAreas.concat(curAreas);
             }
 
             return wholeAreas;
