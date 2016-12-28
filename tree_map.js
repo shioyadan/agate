@@ -31,7 +31,7 @@ function TreeMap(){
 
             // 長い辺の方を分割
             let divided = 
-                (width > height) ?
+                (width * 1.02 > height) ?
                 [
                     [left, top, left + width*ratio, bottom],
                     [left + width*ratio, top, right, bottom],
@@ -48,22 +48,34 @@ function TreeMap(){
 
         // キャッシュされたバイナリツリーを得る
         getCachedDivTree: function(fileTree) {
-/*
-                // 連鎖的に下位の情報を構築していくため，最上位以外でここにくることはない
+
+            // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
+            if (!fileTree.treeMapCache) {
                 fileTree.treeMapCache = {
                     areas: null,
-                    rect: [0, 0, 1.0, 1.0]
+                    rect: [0, 0, 1.6, 0.9]
                 };
-*/
+            }
 
-            if (!fileTree.treeMapCache) {
+            if (!fileTree.treeMapCache.areas) {
                 let divTree = self.makeBinTree(fileTree.children);
                 let areas = {};
-                self.createAbstractAreas(divTree, areas, [0, 0, 1.0, 1.0]);
-                fileTree.treeMapCache = {
-                    areas: areas,
-                    rect: [0, 0, 0, 0]
-                };
+                self.createAbstractAreas(divTree, areas, fileTree.treeMapCache.rect);
+
+                fileTree.treeMapCache.areas = areas;
+                for (let key in areas) {
+                    let r = areas[key];
+                    fileTree.children[key].treeMapCache = {
+                        rect: [0, 0, r[2] - r[0], r[3] - r[1]],
+                        areas: null
+                    };
+
+                    // 正規化
+                    areas[key][0] /= fileTree.treeMapCache.rect[2] - fileTree.treeMapCache.rect[0];
+                    areas[key][1] /= fileTree.treeMapCache.rect[3] - fileTree.treeMapCache.rect[1];
+                    areas[key][2] /= fileTree.treeMapCache.rect[2] - fileTree.treeMapCache.rect[0];
+                    areas[key][3] /= fileTree.treeMapCache.rect[3] - fileTree.treeMapCache.rect[1];
+                }
             }
             return fileTree.treeMapCache;
         },
@@ -218,12 +230,13 @@ function TreeMap(){
 
                         // 一定以上の大きさなら探索
                         if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+
                             let width = r[2] - r[0];
                             let height = r[3] - r[1];
-
                             let cache = self.getCachedDivTree(a.fileInfoChildren);
                             for (let key in cache.areas) {
                                 let cr = cache.areas[key];
+
                                 areas.push({
                                     key: key,
                                     fileInfoChildren: a.fileInfoChildren.children[key],

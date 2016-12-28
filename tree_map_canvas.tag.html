@@ -126,7 +126,7 @@
                 let height = canvas.height;
 
                 let zoom = private.calcZoomRatio(private.zoomLevel);
-                let virtualWidth = 900 * zoom;
+                let virtualWidth = 1600 * zoom;
                 let virtualHeight = 900 * zoom;
                 let areas = private.treeMap.createTreeMap(
                     self.private.tree, 
@@ -135,6 +135,7 @@
                 );
 
                 let fillStyle = [];
+                let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
                 let strokeStyle = [];
                 for (let i = 0; i < 10; i++) {
                     fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
@@ -182,6 +183,11 @@
                     
                     // レベルに応じた色にする
                     c.fillStyle = fillStyle[a.level];
+                    /*
+                    if (!a.fileInfoChildren.children) {
+                        c.fillStyle = fillFileStyle;
+                    }
+                    */
                     c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 }
 
