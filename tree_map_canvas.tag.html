@@ -20,7 +20,7 @@
         let BASE_SIZE = [1600, 900];    
 
         let ZOOM_RATIO = 0.8;   // 一回に拡大縮小する率 (2^ZOOM_RATIO)
-        let ZOOM_ANIMATION_SPEED = 0.06;    // ZOOM_RATIO のフレーム当たり加算値
+        let ZOOM_ANIMATION_SPEED = 0.07;    // ZOOM_RATIO のフレーム当たり加算値
         
 
         let private = {
@@ -65,7 +65,7 @@
             // ダブルクリック
             onMouseDoubleClick: function(e){
                 let zoomIn = true;
-                if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック
+                if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック or シフトキー
                     zoomIn = false; 
                 }
                 private.startZoom(zoomIn, e.clientX, e.clientY);

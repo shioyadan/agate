@@ -145,19 +145,24 @@
             // フォルダのオープン
             openFolder: function(path){
 
-                //let fileInfo = require("electron").remote.require("./fileInfo");
+                const dialog = require("electron").remote.dialog;
 
-                /* global fileInfo */
-                fileInfo.getFileTree(
-                    //"z:\\",
-                    //"C:\\",
-                    //"./", 
-                    //"C:\\Users\\shioya\\Desktop\\onikiri2\\lib\\boost\\boost_1_53_0",
-                    "C:\\Users\\shioya\\Desktop",
-                    function(context, tree) {
-                        // ナビゲーションに設定するタイトルの変更
-                        self.refs.tree_map_canvas.setTree(tree);
-                        self.refs.app_navbar.title = context.count;
+                dialog.showOpenDialog(
+                    null, {
+                        properties: ['openDirectory'],
+                        title: 'フォルダを選んでください',
+                        defaultPath: '.'
+                    },
+                    function(folderName){
+                        /* global fileInfo */
+                        fileInfo.getFileTree(
+                            folderName[0],  // 配列で渡される
+                            function(context, tree) {
+                                // ナビゲーションに設定するタイトルの変更
+                                self.refs.tree_map_canvas.setTree(tree);
+                                self.refs.app_navbar.title = context.count;
+                            }
+                        );
                     }
                 );
             },
