@@ -90,7 +90,8 @@
                     private.draw();
                 }
                 private.pointedPath = private.getPathFromPoint([e.offsetX, e.offsetY]);
-                console.log(private.pointedPath);
+                //console.log(private.pointedPath);
+                self.changePaintedPath.map(function(f){f(private.pointedPath);});
             },
             onMouseDown: function(e) {
                 if (e.buttons & 1) {
@@ -302,14 +303,39 @@
                 if (!private.areas) {
                     return null;
                 }
+                let fileNode = null
                 for (let i = private.areas.length - 1; i >= 0; i--) {
                     let r = private.areas[i].rect;
                     if (r[0] < pos[0] && pos[0] < r[2] && 
                         r[1] < pos[1] && pos[1] < r[3]) {
-                        return private.areas[i].key;   // hit
+                        fileNode = private.areas[i].fileNode;   // hit
+                        break;
                     }
                 }
-                return null;
+                if (!fileNode) {
+                    return null;
+                }
+
+                let path = "";
+                while (fileNode) {
+                    let parent = fileNode.parent;
+                    if (!parent) {
+                        break;
+                    }
+                    for (let key in parent.children) {
+                        if (parent.children[key] == fileNode) {
+                            if (path != "") {
+                                path = key + "/" + path;
+                            }
+                            else {
+                                path = key;
+                            }
+                            break;
+                        }
+                    }
+                    fileNode = parent;
+                }
+                return path;
             },
 
         };
@@ -317,9 +343,15 @@
         self.private = private;
 
         // ファイルツリー情報をセット
-        self.setTree = function(tree) {
+        self.setTree = function(tree){
             self.private.tree = tree;
             self.private.draw();
+        };
+
+        // ポイントされてる部分のパスが変わったときのハンドラ
+        self.changePaintedPath = [];
+        self.onPointedPathChanged = function(callback){
+            self.changePaintedPath.push(callback);
         };
 
         // エントリポイント

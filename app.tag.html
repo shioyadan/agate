@@ -143,15 +143,15 @@
             },
 
             // フォルダのオープン
-            openFolder: function(path){
+            openFolder: function(){
 
                 const dialog = require("electron").remote.dialog;
 
                 dialog.showOpenDialog(
                     null, {
-                        properties: ['openDirectory'],
-                        title: 'フォルダを選んでください',
-                        defaultPath: '.'
+                        properties: ["openDirectory"],
+                        title: "フォルダを選んでください",
+                        defaultPath: "."
                     },
                     function(folderName){
                         /* global fileInfo */
@@ -160,7 +160,7 @@
                             function(context, tree) {
                                 // ナビゲーションに設定するタイトルの変更
                                 self.refs.tree_map_canvas.setTree(tree);
-                                self.refs.app_navbar.title = context.count;
+                                //self.refs.app_navbar.title = context.count;
                             }
                         );
                     }
@@ -188,6 +188,12 @@
 
                 // フォルダを開くのバインド
                 self.refs.app_navbar.onOpenFolder = app.openFolder;
+
+                // navbar のタイトル部分
+                self.refs.tree_map_canvas.onPointedPathChanged(function(path){
+                    self.refs.app_navbar.title = path;
+                    self.refs.app_navbar.update();
+                });
             },
         };
 
