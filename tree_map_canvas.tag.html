@@ -39,6 +39,7 @@
             // タグのマウント時に呼ばれるようにする
             init: function() {
                 let canvas = self.refs.canvas;
+
                 canvas.onmousewheel = self.private.onMouseWheel;
                 canvas.onmousemove = self.private.onMouseMove;
                 canvas.onmousedown = self.private.onMouseDown;
@@ -46,54 +47,10 @@
                 canvas.onmouseleave = self.private.onMouseUp;
             },        
 
-            // 拡大率
-            calcZoomRatio: function(level) {
-                return Math.pow(1.3, level);
-            },
-
-            //
-            setZoomLevel: function(newZoomLevel, offsetX, offsetY) {
-                let newZoomRatio = private.calcZoomRatio(newZoomLevel);
-                let oldZoomRatio = private.calcZoomRatio(private.zoomLevel);
-
-                // ポインタの位置が拡大の前後で同じ位置を指すように変換
-                let newAbsPosX = (offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
-                let newAbsPosY = (offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
-
-                // そこからマウスポインタの位置を引いて，左上の座標を決定
-                private.viewPoint[0] = newAbsPosX - offsetX;
-                private.viewPoint[1] = newAbsPosY - offsetY;
-                
-                private.zoomLevel = newZoomLevel;
-            },
-
-            animateZoom: function() {
-                if (!private.inZoomAnimation) {
-                    return;
-                }
-
-                let newZoomLevel = private.zoomLevel + (private.zoomAnimationDirection ? 0.1 : -0.1);
-                private.setZoomLevel(
-                    newZoomLevel, private.zoomBasePoint[0], private.zoomBasePoint[1]
-                );
-                private.draw();
-                if ((private.zoomAnimationDirection && newZoomLevel > private.zoomEndLevel) ||
-                    (!private.zoomAnimationDirection && newZoomLevel < private.zoomEndLevel)){
-                    private.inZoomAnimation = false;
-                    clearInterval(private.zoomAnimationID);
-                }
-            },
-
+            // マウスのイベントハンドラ
             // マウスホイール操作
             onMouseWheel: function(e) {
-                if (!private.inZoomAnimation) {
-                    private.zoomAnimationDirection = (e.deltaY < 0);
-                    private.zoomBasePoint = [e.offsetX, e.offsetY];
-                    private.zoomEndLevel = 
-                        private.zoomLevel + (private.zoomAnimationDirection ? 1.5 : -1.5);
-                    private.inZoomAnimation = true;
-                    private.zoomAnimationID = setInterval(private.animateZoom, 16);
-                }
+                private.startZoom(e.deltaY < 0, e.offsetX, e.offsetY);
             },
 
             // マウス移動
@@ -114,6 +71,61 @@
             onMouseUp: function(e) {
                 if (!(e.buttons & 1)) { // 離したので 0 になる
                     private.inDrag = false;
+                }
+            },
+
+
+            // 拡大率の計算
+            // level は指数で表す
+            calcZoomRatio: function(level) {
+                return Math.pow(1.3, level);
+            },
+
+            // ズームのスタート
+            startZoom: function(direction, offsetX, offsetY){
+                if (!private.inZoomAnimation) {
+                    // 拡大 or 縮小
+                    private.zoomAnimationDirection = direction;
+                    private.zoomEndLevel = 
+                        private.zoomLevel + (private.zoomAnimationDirection ? 1.5 : -1.5);
+                    private.zoomBasePoint = [offsetX, offsetY];
+                    private.inZoomAnimation = true;
+                    private.zoomAnimationID = setInterval(private.animateZoom, 16);
+                }
+            },
+
+            // offsetX/offsetY を基準に，newZoomLevel を適用
+            setZoomLevel: function(newZoomLevel, offsetX, offsetY) {
+                let newZoomRatio = private.calcZoomRatio(newZoomLevel);
+                let oldZoomRatio = private.calcZoomRatio(private.zoomLevel);
+
+                // ポインタの位置が拡大の前後で同じ位置を指すように変換
+                let newAbsPosX = (offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
+                let newAbsPosY = (offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
+
+                // そこからマウスポインタの位置を引いて，左上の座標を決定
+                private.viewPoint[0] = newAbsPosX - offsetX;
+                private.viewPoint[1] = newAbsPosY - offsetY;
+
+                // 新しいズームレベルを適用  
+                private.zoomLevel = newZoomLevel;
+            },
+
+            // ズームアニメーション中は，一定時間毎に呼び出される
+            animateZoom: function() {
+                if (!private.inZoomAnimation) {
+                    return;
+                }
+
+                let newZoomLevel = private.zoomLevel + (private.zoomAnimationDirection ? 0.1 : -0.1);
+                private.setZoomLevel(
+                    newZoomLevel, private.zoomBasePoint[0], private.zoomBasePoint[1]
+                );
+                private.draw();
+                if ((private.zoomAnimationDirection && newZoomLevel > private.zoomEndLevel) ||
+                    (!private.zoomAnimationDirection && newZoomLevel < private.zoomEndLevel)){
+                    private.inZoomAnimation = false;
+                    clearInterval(private.zoomAnimationID);
                 }
             },
 
