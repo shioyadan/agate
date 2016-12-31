@@ -83,7 +83,7 @@
     <script>
         let self = this;
 
-        self.title = "test";
+        self.title = "";
         self.onOpenFolder = null;
 
         // Update handler
@@ -115,8 +115,13 @@
 <app>
 
     <!-- Navigation ber -->
-    <app_navbar ref="app_navbar">  <!-- app を渡している -->
+    <app_navbar ref="app_navbar">
     </app_navbar>
+
+    <!-- -->
+    <div class="well well-sm" style="margin:0px;" ref="app_path_well" >
+        {app.pointedPath}
+    </div>
 
     <!-- ツリーマップ-->
     <div style="width:100%; height:100%;" ref="canvas_holder">
@@ -134,7 +139,7 @@
 
         // アプリケーションのコンテキスト
         let app = {
-            mode: "tome",   // 現在のアプリのモード
+            pointedPath: "",    // 
 
             // ダイアログを表示
             modalDialog: function(msg) {
@@ -191,8 +196,12 @@
 
                 // navbar のタイトル部分
                 self.refs.tree_map_canvas.onPointedPathChanged(function(path){
-                    self.refs.app_navbar.title = path;
-                    self.refs.app_navbar.update();
+                    if (!path) {
+                        path = "Invalid";
+                    }
+                    self.app.pointedPath = path;
+                    self.update();
+                    //self.refs.app_path_well.update();
                 });
             },
         };
