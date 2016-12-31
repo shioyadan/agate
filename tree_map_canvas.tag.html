@@ -9,12 +9,14 @@
         let self = this;
 
         let FONT_FIZE = 15;
-        let MERGIN = [8, 8 + FONT_FIZE, -8, -8];
+        let TILE_MERGIN = [8, 8 + FONT_FIZE, -8, -8];
+        let BASE_SIZE = [1600, 900];
+        let ZOOM_RATIO = 1.5;
         
         let private = {
 
             // ツリーマップ
-            treeMap: TreeMap(1600, 900, MERGIN),
+            treeMap: TreeMap(BASE_SIZE[0], BASE_SIZE[1], TILE_MERGIN),
 
             // ファイルツリー
             tree: null,
@@ -87,7 +89,7 @@
                     // 拡大 or 縮小
                     private.zoomAnimationDirection = direction;
                     private.zoomEndLevel = 
-                        private.zoomLevel + (private.zoomAnimationDirection ? 1.5 : -1.5);
+                        private.zoomLevel + (private.zoomAnimationDirection ? ZOOM_RATIO : -ZOOM_RATIO);
                     private.zoomBasePoint = [offsetX, offsetY];
                     private.inZoomAnimation = true;
                     private.zoomAnimationID = setInterval(private.animateZoom, 16);
@@ -228,7 +230,7 @@
                         c.strokeStyle = strokeStyle[a.level];
                         prevLevel = a.level;
                     }
-                    let pos = [Math.max(0, rect[0]) + MERGIN[0]/2, rect[1] + FONT_FIZE];
+                    let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
 
                     if (!a.fileNode.children) {
                         // ファイル
@@ -246,7 +248,7 @@
                 c.fillStyle = "rgb(255,255,255)";
                 for (let a of strAreas) {
                     let rect = a.rect;
-                    let pos = [Math.max(0, rect[0]) + MERGIN[0]/2, rect[1] + FONT_FIZE];
+                    let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
                     if (!a.fileNode.children) {
                         // ファイル
                         pos[0] += 10;
