@@ -45,11 +45,14 @@ let fileInfo = {
             finish: false,
             searching: 0,
             searchingDir: 1,
-            tree: {children: {}},
+            tree: {
+                children: {},
+                parent: null
+            },
             callCount: 0,
         };
 
-        fileInfo.getFileTreeOnMainBody(path, context, context.tree.children);
+        fileInfo.getFileTreeOnMainBody(path, context, context.tree);
     },
         
     // getFileTree の実装
@@ -107,15 +110,16 @@ let fileInfo = {
                             size: stat.size,
                             isDirectory: stat.isDirectory(),
                             children: null,
+                            parent: parent,
                             treeMapCache: null   // ツリーマップのキャッシュに使うスタブ
                         };
-                        parent[pathElement] = node;
+                        parent.children[pathElement] = node;
 
                         if (stat.isDirectory()) {
                             node.children = {};
                             context.searchingDir++;
                             fileInfo.getFileTreeOnMainBody(
-                                filePath, context, node.children
+                                filePath, context, node
                             );
                         }
                     }
