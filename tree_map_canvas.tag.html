@@ -31,6 +31,9 @@
             // ファイルツリー
             tree: null,
 
+            // 描画領域
+            areas: null,
+
             // 表示系
             zoomLevel: 0,   // 拡大率
             viewPoint: [0, 0],  // タイルマップ上における表示領域の左上の座標
@@ -46,6 +49,8 @@
             inDrag: false,  // マウスでドラッグ中か
             prevMousePoint: [0, 0], // 前回のマウスポインタの位置
 
+            // 現在ポイントされているフォルダ/ファイルのパス
+            pointedPath: null,
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
@@ -84,6 +89,8 @@
                     private.prevMousePoint = [e.offsetX, e.offsetY];
                     private.draw();
                 }
+                private.pointedPath = private.getPathFromPoint([e.offsetX, e.offsetY]);
+                console.log(private.pointedPath);
             },
             onMouseDown: function(e) {
                 if (e.buttons & 1) {
@@ -172,6 +179,7 @@
                     virtualWidth, virtualHeight, 
                     [private.viewPoint[0], private.viewPoint[1], private.viewPoint[0] + width, private.viewPoint[1] + height]
                 );
+
                 // ビューポートの場所に更新
                 for (let a of areas) {
                     a.rect[0] -= private.viewPoint[0];
@@ -179,6 +187,9 @@
                     a.rect[2] -= private.viewPoint[0];
                     a.rect[3] -= private.viewPoint[1];
                 }
+
+                // ポイント位置情報を取るために保存
+                private.areas = areas;
 
                 let fillStyle = [];
                 //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
@@ -284,7 +295,22 @@
                         c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
                     }
                 }
-            }
+            },
+
+            // 座標からその場所のパスを得る
+            getPathFromPoint: function(pos){
+                if (!private.areas) {
+                    return null;
+                }
+                for (let i = private.areas.length - 1; i >= 0; i--) {
+                    let r = private.areas[i].rect;
+                    if (r[0] < pos[0] && pos[0] < r[2] && 
+                        r[1] < pos[1] && pos[1] < r[3]) {
+                        return private.areas[i].key;   // hit
+                    }
+                }
+                return null;
+            },
 
         };
 
