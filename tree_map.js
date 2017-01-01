@@ -7,6 +7,8 @@ function TreeMap(baseAspectX, baseAspectY, mergin){
     this.baseAspectX = baseAspectX;
     this.baseAspectY = baseAspectY;
     this.mergin = mergin;
+
+    this.treeMapCache = {}; // ファイルパスから分割情報へのキャッシュ
 }
 
 // ファイルノードからパスを得る
@@ -14,7 +16,7 @@ TreeMap.prototype.getPathFromFileNode = function(fileNode){
     // file tree からパスを生成
     let path = fileNode.key;
     fileNode = fileNode.parent;
-    while (fileNode.parent) {
+    while (fileNode) {
         path = fileNode.key + "/" + path;
         fileNode = fileNode.parent;
     }
@@ -24,43 +26,52 @@ TreeMap.prototype.getPathFromFileNode = function(fileNode){
 
 // キャッシュされたバイナリツリーを得る
 // キャッシュは fileTree 内部に直に保持される
-TreeMap.prototype.getDivTree = function(fileTree){
+TreeMap.prototype.getDivTree = function(fileNode){
     let self = this;
 
     // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
-    if (!fileTree.treeMapCache) {
-        fileTree.treeMapCache = {
+    let path = self.getPathFromFileNode(fileNode);
+    if (!(path in self.treeMapCache)){
+        self.treeMapCache[path] = {
+            rect: [0, 0, self.baseAspectX, self.baseAspectY],
             areas: null,
-            rect: [0, 0, self.baseAspectX, self.baseAspectY]
         };
     }
 
-    // area が未生成の場合，ここで生成
-    if (!fileTree.treeMapCache.areas) {
-        let divTree = self.makeDivTree(fileTree.children);
+    let cache = self.treeMapCache[path];
 
+    // area が未生成の場合，ここで生成
+    if (!cache.areas) {
+
+        // 分割木を生成
+        let divTree = self.makeDivTree(fileNode.children);
+
+        // 分割木を元に分割領域を生成
         let areas = {};
-        let baseRect = fileTree.treeMapCache.rect;
+        let baseRect = cache.rect;
         self.divideRects(divTree, areas, baseRect);
 
-        fileTree.treeMapCache.areas = areas;
+        // 子階層に縦横比を伝える
         for (let key in areas) {
+            let childPath = self.getPathFromFileNode(fileNode.children[key]); 
             let r = areas[key];
-
-            // 子階層に縦横比を伝える
-            fileTree.children[key].treeMapCache = {
+            self.treeMapCache[childPath] = {
                 rect: [0, 0, r[2] - r[0], r[3] - r[1]],
                 areas: null
             };
-
-            // 縦横それぞれ0 から 1.0 に正規化して保存
-            areas[key][0] /= baseRect[2] - baseRect[0];
-            areas[key][1] /= baseRect[3] - baseRect[1];
-            areas[key][2] /= baseRect[2] - baseRect[0];
-            areas[key][3] /= baseRect[3] - baseRect[1];
         }
+
+        // 縦横それぞれ0 から 1.0 に正規化して保存
+        for (let key in areas) {
+            let r = areas[key];
+            r[0] /= baseRect[2] - baseRect[0];
+            r[1] /= baseRect[3] - baseRect[1];
+            r[2] /= baseRect[2] - baseRect[0];
+            r[3] /= baseRect[3] - baseRect[1];
+        }
+        cache.areas = areas;
     }
-    return fileTree.treeMapCache;
+    return cache;
 };
 
 // tree からバイナリツリーを作る

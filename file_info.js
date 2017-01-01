@@ -50,7 +50,10 @@ FileInfo.prototype.getFileTreeOnMain = function(path, callback) {
         searchingDir: 1,
         tree: {
             children: {},
-            parent: null
+            parent: null,
+            key: path,
+            size: 0,
+            isDirectory: false,
         },
         callCount: 0,
     };
