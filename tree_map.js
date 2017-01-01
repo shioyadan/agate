@@ -2,13 +2,10 @@
 // baseAspectX/baseAspectY: 生成するツリーマップ絶対のアスペクト比
 //
 
-function TreeMap(baseAspectX, baseAspectY, mergin){
-
-    this.baseAspectX = baseAspectX;
-    this.baseAspectY = baseAspectY;
-    this.mergin = mergin;
-
+function TreeMap(){
+    this.cachedAspectRatio = 1.0;   // (幅)/(高さ)
     this.treeMapCache = {}; // ファイルパスから分割情報へのキャッシュ
+    this.areas = []; // 生成済み領域情報
 }
 
 // ファイルノードからパスを得る
@@ -26,14 +23,20 @@ TreeMap.prototype.getPathFromFileNode = function(fileNode){
 
 // キャッシュされたバイナリツリーを得る
 // キャッシュは fileTree 内部に直に保持される
-TreeMap.prototype.getDivTree = function(fileNode){
+TreeMap.prototype.getDivTree = function(fileNode, aspectRatio){
     let self = this;
+
+    // アスペクト比が大きく変わった場合，キャッシュを無効化
+    if (Math.abs(aspectRatio - self.cachedAspectRatio) > 0.1){
+        self.treeMapCache = {};
+    }
+    self.cachedAspectRatio = aspectRatio;
 
     // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
     let path = self.getPathFromFileNode(fileNode);
     if (!(path in self.treeMapCache)){
         self.treeMapCache[path] = {
-            rect: [0, 0, self.baseAspectX, self.baseAspectY],
+            rect: [0, 0, aspectRatio*1.0, 1.0],
             areas: null,
         };
     }
@@ -182,11 +185,13 @@ TreeMap.prototype.divideRects = function(divNode, divided, rect) {
 };
 
 // 描画領域の作成
-TreeMap.prototype.createTreeMap = function(fileNode, virtWidth, virtHeight, viewPort) {
+TreeMap.prototype.createTreeMap = function(
+    fileNode, virtWidth, virtHeight, viewPort, mergin
+) {
     let self = this;
 
     function traverse(fileNode, areas, virtRect, level) {
-        let cache = self.getDivTree(fileNode);
+        let cache = self.getDivTree(fileNode, virtWidth/virtHeight);
         let width = virtRect[2] - virtRect[0];
         let height = virtRect[3] - virtRect[1];
 
@@ -228,10 +233,10 @@ TreeMap.prototype.createTreeMap = function(fileNode, virtWidth, virtHeight, view
         for (let a of curAreas) {
             if (a.fileNode.children) {
                 let r = [
-                    a.rect[0] + self.mergin[0],
-                    a.rect[1] + self.mergin[1],
-                    a.rect[2] + self.mergin[2],
-                    a.rect[3] + self.mergin[3],
+                    a.rect[0] + mergin[0],
+                    a.rect[1] + mergin[1],
+                    a.rect[2] + mergin[2],
+                    a.rect[3] + mergin[3],
                 ];
 
                 // 一定以上の大きさなら探索
@@ -250,6 +255,16 @@ TreeMap.prototype.createTreeMap = function(fileNode, virtWidth, virtHeight, view
         wholeAreas = wholeAreas.concat(curAreas);
     }
 
+    // ビューポートの場所に更新
+    for (let a of wholeAreas) {
+        a.rect[0] -= viewPort[0];
+        a.rect[1] -= viewPort[1];
+        a.rect[2] -= viewPort[0];
+        a.rect[3] -= viewPort[1];
+    }
+
+    // 位置判定のためにとっておく
+    self.areas = wholeAreas;
     return wholeAreas;
 
 };

@@ -4,7 +4,6 @@
     </canvas>
 
     <script>
-        /*global TreeMap*/ 
 
         let self = this;
 
@@ -26,7 +25,8 @@
         let private = {
 
             // ツリーマップ
-            treeMap: new TreeMap(BASE_SIZE[0], BASE_SIZE[1], TILE_MERGIN),
+            /*global TreeMap*/ 
+            treeMap: new TreeMap(),
 
             // ファイルツリー
             tree: null,
@@ -185,16 +185,9 @@
                         private.viewPoint[1], 
                         private.viewPoint[0] + width, 
                         private.viewPoint[1] + height
-                    ]
+                    ],
+                    TILE_MERGIN
                 );
-
-                // ビューポートの場所に更新
-                for (let a of areas) {
-                    a.rect[0] -= private.viewPoint[0];
-                    a.rect[1] -= private.viewPoint[1];
-                    a.rect[2] -= private.viewPoint[0];
-                    a.rect[3] -= private.viewPoint[1];
-                }
 
                 // ポイント位置情報を取るために保存
                 private.areas = areas;
