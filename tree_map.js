@@ -44,7 +44,7 @@ TreeMap.prototype.getDivTree = function(fileNode){
     if (!cache.areas) {
 
         // 分割木を生成
-        let divTree = self.makeDivTree(fileNode.children);
+        let divTree = self.makeDivTree(fileNode);
 
         // 分割木を元に分割領域を生成
         let areas = {};
@@ -74,23 +74,24 @@ TreeMap.prototype.getDivTree = function(fileNode){
     return cache;
 };
 
-// tree からバイナリツリーを作る
-// このバイナリツリーはあるフォルダの中のファイルの分割方法を表す．
+// tree から分割木を作る
+// この分割木はバイナリツリーであり，フォルダの中のファイルの分割方法を表す．
 // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
 // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
 // が小さくなる･･･ と思う
-TreeMap.prototype.makeDivTree = function(tree) {
-    let keys = Object.keys(tree);
+TreeMap.prototype.makeDivTree = function(fileNode) {
+    let fileChildren = fileNode.children;
+    let keys = Object.keys(fileChildren);
 
     // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
     keys = keys.filter(function(key) {
-        return !(tree[key].size < 1);
+        return !(fileChildren[key].size < 1);
     });
 
     // tree 直下のファイル/ディレクトリのサイズでソート
     keys.sort(function(a, b) {
-        let sizeA = tree[a].size;
-        let sizeB = tree[b].size;
+        let sizeA = fileChildren[a].size;
+        let sizeB = fileChildren[b].size;
         if (sizeA > sizeB) return -1;
         if (sizeA < sizeB) return 1;
         return 0;
@@ -98,14 +99,14 @@ TreeMap.prototype.makeDivTree = function(tree) {
 
     // 再帰的にツリーを作成
     // 渡された node の中身を書き換える必要があるので注意
-    function makeDivNode(divNode, fileNames, fileNode) {
+    function makeDivNode(divNode, fileNames, fileChildren) {
 
         // 末端
         if (fileNames.length <= 1) {
-            divNode.size = fileNode[fileNames[0]].size;
+            divNode.size = fileChildren[fileNames[0]].size;
             divNode.key = fileNames[0];
             divNode.children = null;
-            divNode.fileNode = fileNode[fileNames[0]];
+            divNode.fileNode = fileChildren[fileNames[0]];
             return;
         }
 
@@ -119,11 +120,11 @@ TreeMap.prototype.makeDivTree = function(tree) {
             // 左右のうち，現在小さい方に加えることでバランスさせる
             if (leftSize < rightSize) {
                 left.push(fileName);
-                leftSize += fileNode[fileName].size;
+                leftSize += fileChildren[fileName].size;
             }
             else{
                 right.push(fileName);
-                rightSize += fileNode[fileName].size;
+                rightSize += fileChildren[fileName].size;
             }
         }
 
@@ -132,20 +133,20 @@ TreeMap.prototype.makeDivTree = function(tree) {
         divNode.key = "";
         divNode.fileNode = null;
 
-        makeDivNode(divNode.children[0], left, fileNode);
-        makeDivNode(divNode.children[1], right, fileNode);
+        makeDivNode(divNode.children[0], left, fileChildren);
+        makeDivNode(divNode.children[1], right, fileChildren);
     }
 
     let divTree = {};
-    makeDivNode(divTree, keys, tree);
+    makeDivNode(divTree, keys, fileChildren);
     return divTree;
 };
 
 
-// バイナリツリーから矩形のリストを再帰的に作成する
+// 分割木から矩形のリストを再帰的に作成する
 // divNode: バイナリツリーのノード
-// divided: 分割結果の矩形のハッシュ
-// rect: 分割対象の矩形．これを binNode に従い再帰的に分割
+// divided: 分割結果の矩形のハッシュ（ファイル名 -> 矩形）
+// rect: 分割対象の矩形．これを divNode に従い再帰的に分割
 TreeMap.prototype.divideRects = function(divNode, divided, rect) {
     let self = this;
 
