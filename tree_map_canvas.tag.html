@@ -175,8 +175,8 @@
                 let height = canvas.height;
 
                 let zoom = private.calcZoomRatio(private.zoomLevel);
-                let virtualWidth = 1600 * zoom;
-                let virtualHeight = 900 * zoom;
+                let virtualWidth = BASE_SIZE[0] * zoom;
+                let virtualHeight = BASE_SIZE[1] * zoom;
                 let areas = private.treeMap.createTreeMap(
                     self.private.tree, 
                     virtualWidth, virtualHeight, 
@@ -326,13 +326,7 @@
                 }
 
                 // file tree からパスを生成
-                let path = fileNode.key;
-                fileNode = fileNode.parent;
-                while (fileNode.parent) {
-                    path = fileNode.key + "/" + path;
-                    fileNode = fileNode.parent;
-                }
-                return path;
+                return private.treeMap.getPathFromFileNode(fileNode);
             },
 
         };

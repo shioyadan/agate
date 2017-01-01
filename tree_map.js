@@ -9,10 +9,22 @@ function TreeMap(baseAspectX, baseAspectY, mergin){
     this.mergin = mergin;
 }
 
+// ファイルノードからパスを得る
+TreeMap.prototype.getPathFromFileNode = function(fileNode){
+    // file tree からパスを生成
+    let path = fileNode.key;
+    fileNode = fileNode.parent;
+    while (fileNode.parent) {
+        path = fileNode.key + "/" + path;
+        fileNode = fileNode.parent;
+    }
+    return path;
+};
+
 
 // キャッシュされたバイナリツリーを得る
 // キャッシュは fileTree 内部に直に保持される
-TreeMap.prototype.getDivTree = function(fileTree) {
+TreeMap.prototype.getDivTree = function(fileTree){
     let self = this;
 
     // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
