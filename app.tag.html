@@ -6,14 +6,14 @@
         <div class="container-fluid">
 
             <div class="navbar-header">
-                <div class="navbar-brand">
-                    {title}
-                </div>
                 <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#id_app_navbar">
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span> 
                 </button>
+                <div class="navbar-brand">
+                    {title}
+                </div>
             </div>
             
             <div class="collapse navbar-collapse" id="id_app_navbar">
@@ -77,14 +77,16 @@
     <app_navbar ref="app_navbar">
     </app_navbar>
 
-    <!-- メッセージ -->
-    <div class="well well-sm" style="margin:0px;">
-        {app.pointedPath}
+    <!-- ツリーマップ style="width:100%; height:100%;" -->
+    <div ref="canvas_holder">
+        <tree_map_canvas ref="tree_map_canvas"></tree_map_canvas>
     </div>
 
-    <!-- ツリーマップ-->
-    <div style="width:100%; height:100%;" ref="canvas_holder">
-        <tree_map_canvas ref="tree_map_canvas"></tree_map_canvas>
+    <!-- メッセージ -->
+    <div class="panel panel-info" style="margin:0px;" ref="status_bar">
+        <div class="panel-footer">
+            {app.statusBarMessage}
+	    </div>
     </div>
 
     <!-- Notification dialog
@@ -102,7 +104,7 @@
                 label: "ファイル",
                 submenu: [{
                     label: "フォルダを開く",
-                    click: function(){app.openFolder();}
+                    click: function(){app.oopenFolder();}
                 }]
             },
             {
@@ -110,15 +112,7 @@
                 submenu: [
                     {
                         label: "開発者ツールの切り替え",
-                        click: function(){
-                            let win = require("electron").remote.getCurrentWindow();
-                            if (win.isDevToolsOpened()) {
-                                win.closeDevTools();
-                            }
-                            else {
-                                win.openDevTools();
-                            }
-                        }
+                        click: function(){app.toggleDevTools();}
                     },
                     {
                         label: "バージョン情報",
@@ -131,12 +125,22 @@
 
         // アプリケーションのコンテキスト
         let app = {
-            pointedPath: "",    // 
+            statusBarMessage: "フォルダを開いてください",    // 
 
             // ダイアログを表示
-            modalDialog: function(msg) {
+            modalDialog: function(msg){
                 self.tags.modal_dialog.modal_message(msg);
+            },
 
+            // 開発者ツールのオンオフ
+            toggleDevTools: function(){
+                let win = require("electron").remote.getCurrentWindow();
+                if (win.isDevToolsOpened()) {
+                    win.closeDevTools();
+                }
+                else {
+                    win.openDevTools();
+                }
             },
 
             // フォルダのオープン
@@ -153,12 +157,15 @@
                         defaultPath: "."
                     },
                     function(folderName){
+                        if (!folderName) {
+                            return;
+                        }
                         fileInfo.getFileTree(
                             folderName[0],  // 配列で渡される
                             function(context, tree) {
-                                // ナビゲーションに設定するタイトルの変更
                                 self.refs.tree_map_canvas.setTree(tree);
-                                //self.refs.app_navbar.title = context.count;
+                                app.statusBarMessage = folderName[0] + " を読み込みました";
+                                self.update();
                             }
                         );
                     }
@@ -166,20 +173,28 @@
             },
 
             // リサイズハンドラ
-            onResize: function() {
+            onResize: function(){
                 // CSS で指定するとぼける
                 // キャンバスのサイズを無理矢理変更する必要がある
                 let canvas = self.refs.tree_map_canvas;
-                let canvas_holder = self.refs.canvas_holder;
-                canvas.width = canvas_holder.offsetWidth;
-                // navbar の分を引く
-                canvas.height = canvas_holder.offsetHeight - self.tags.app_navbar.getHeight();
+                let canvasHolder = self.refs.canvas_holder;
+
+                canvasHolder.style.width = "" + document.body.offsetWidth + "px";
+
+                let bodyHeight = 
+                    document.body.offsetHeight - 
+                    self.tags.app_navbar.getHeight() -
+                    self.refs.status_bar.offsetHeight;
+                canvasHolder.style.height = "" + bodyHeight + "px";
+
+                canvas.width = canvasHolder.offsetWidth;
+                canvas.height = canvasHolder.offsetHeight;
                 canvas.update();
             },
 
             // 初期化
             // タグのマウント時に呼ばれるようにする
-            init: function() {
+            init: function(){
                 // メニューを追加
                 let Menu = require("electron").remote.Menu;
                 let menu = Menu.buildFromTemplate(menuTemplate);
@@ -188,19 +203,22 @@
                 // リサイズハンドラの設定
                 window.addEventListener("resize", self.app.onResize, false);
                 self.app.onResize();    // サイズを適用しておくために1回呼んでおく
-                self.app.openFolder();
 
                 // フォルダを開くのバインド
                 self.refs.app_navbar.onOpenFolder = app.openFolder;
 
-                // navbar のタイトル部分
+                // パスが変わったときのハンドラの設定
                 self.refs.tree_map_canvas.onPointedPathChanged(function(path){
                     if (!path) {
                         path = "Invalid";
                     }
-                    self.app.pointedPath = path;
+                    self.app.statusBarMessage = path;
+                    //self.refs.app_navbar.title = path;
                     self.update();
                 });
+
+                // 一回開く
+                self.app.openFolder();
             },
         };
 
