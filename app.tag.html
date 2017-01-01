@@ -84,7 +84,7 @@
 
     <!-- メッセージ -->
     <div class="panel panel-info" style="margin:0px;" ref="status_bar">
-        <div class="panel-footer">
+        <div class="panel-heading">
             {app.statusBarMessage}
 	    </div>
     </div>
@@ -164,8 +164,18 @@
                             folderName[0],  // 配列で渡される
                             function(context, tree) {
                                 self.refs.tree_map_canvas.setTree(tree);
-                                app.statusBarMessage = folderName[0] + " を読み込みました";
+                                app.statusBarMessage = 
+                                    "\"" + folderName[0] + "\"から " + 
+                                    context.count + " 個のファイル/フォルダを読み込みました";
                                 self.update();
+                                self.app.onResize();
+                            },
+                            function(context, filePath) {
+                                app.statusBarMessage = 
+                                    "" + context.count + " 個のファイル/フォルダを読み込みました．" + 
+                                    "現在 \"" + filePath + "\" を読み込んでいます．";
+                                self.update();
+                                self.app.onResize();
                             }
                         );
                     }
@@ -213,8 +223,8 @@
                         path = "Invalid";
                     }
                     self.app.statusBarMessage = path;
-                    //self.refs.app_navbar.title = path;
                     self.update();
+                    self.app.onResize();
                 });
 
                 // 一回開く

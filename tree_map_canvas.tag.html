@@ -66,6 +66,9 @@
             // マウスのイベントハンドラ
             // ダブルクリック
             onMouseDoubleClick: function(e){
+                if (private.tree) {
+                    return;
+                }
                 let zoomIn = true;
                 if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック or シフトキー
                     zoomIn = false; 
@@ -75,11 +78,17 @@
 
             // マウスホイール操作
             onMouseWheel: function(e) {
+                if (private.tree) {
+                    return;
+                }
                 private.startZoom(e.deltaY < 0, e.offsetX, e.offsetY);
             },
 
             // マウス移動
             onMouseMove: function(e) {
+                if (private.tree) {
+                    return;
+                }
                 if (private.inDrag){
                     private.viewPoint[0] += private.prevMousePoint[0] - e.offsetX;
                     private.viewPoint[1] += private.prevMousePoint[1] - e.offsetY;
@@ -92,6 +101,9 @@
                 self.changePaintedPath.map(function(f){f(private.pointedPath);});
             },
             onMouseDown: function(e) {
+                if (private.tree) {
+                    return;
+                }
                 if (e.buttons & 1) {
                     private.inDrag = true;
                     private.prevMousePoint = [e.offsetX, e.offsetY];
@@ -100,6 +112,9 @@
                 e.preventDefault();
             },
             onMouseUp: function(e) {
+                if (private.tree) {
+                    return;
+                }
                 if (!(e.buttons & 1)) { // 離したので 0 になる
                     private.inDrag = false;
                 }
@@ -164,13 +179,16 @@
 
             // 描画
             draw: function() {
-                if (!self.private.tree) {
-                    return;
-                }
-
                 let canvas = self.refs.canvas;
                 let width = canvas.width;
                 let height = canvas.height;
+
+                if (!self.private.tree) {
+                    let c = canvas.getContext("2d");
+                    c.fillStyle = "rgb(200,200,200)";
+                    c.fillRect(0, 0, width, height);
+                    return;
+                }
 
                 let zoom = private.calcZoomRatio(private.zoomLevel);
                 let virtualWidth = BASE_SIZE[0] * zoom;

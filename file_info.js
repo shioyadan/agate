@@ -18,34 +18,37 @@ FileInfo.prototype.updateDirectorySize = function(tree){
 
 // path により指定したフォルダ以下のファイルツリーを取得
 // render プロセスで実行
-FileInfo.prototype.getFileTree = function(path, callback){
+FileInfo.prototype.getFileTree = function(path, finishCallback, pogressCallback){
     let self = this;
     // main プロセスで getFileListBody を呼び出す
     //let remote = require("electron").remote.require("./file_info");
     //remote.getFileTreeOnMain(path, function(context, treeJSON) {
 
-    self.getFileTreeOnMain(path, function(context, treeJSON){
+    self.getFileTreeOnMain(
+        path, 
+        function(context, treeJSON){
+            // JSON にシリアライズされて送られてくるので，展開する
+            //tree = JSON.parse(treeJSON);
+            let tree = treeJSON;
 
-        // JSON にシリアライズされて送られてくるので，展開する
-        //tree = JSON.parse(treeJSON);
-        let tree = treeJSON;
+            // 各ディレクトリのサイズ反映
+            self.updateDirectorySize(tree);
 
-        // 各ディレクトリのサイズ反映
-        self.updateDirectorySize(tree);
-
-        // 呼び出し元に返す
-        callback(context, tree);
-    });
+            // 呼び出し元に返す
+            finishCallback(context, tree);
+        },
+        pogressCallback
+    );
 };
 
 // getFileTree の実装のエントリポイント
 // main プロセスで実行
-FileInfo.prototype.getFileTreeOnMain = function(path, callback){
+FileInfo.prototype.getFileTreeOnMain = function(path, finishCallback, pogressCallback){
     let self = this;
     let context = {
         count: 0,
-        callback: callback,
-        finish: false,
+        finishCallback: finishCallback,
+        pogressCallback: pogressCallback,
         searching: 0,
         searchingDir: 1,
         tree: {
@@ -133,16 +136,16 @@ FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent){
                 context.count++;
                 context.searching -= 1;
 
-                
-                // if ((context.searching == 0 && context.searchingDir == 0) || 
-                //    (context.count % (1024*4) == 0)) {
+                if (context.count % (1024*4) == 0) {
+                    context.pogressCallback(context, filePath);
+                }
+
                 if (context.searching == 0 && context.searchingDir == 0){
-                    context.finish = false;
                     // Electron のリモート呼び出しは浅いコピーしかしないので
                     // JSON にシリアライズしておくる
                     //context.callback(context, JSON.stringify(context.tree));
 
-                    context.callback(context, context.tree);
+                    context.finishCallback(context, context.tree);
                 }
             });
         });
