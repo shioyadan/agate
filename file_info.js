@@ -96,7 +96,7 @@ let fileInfo = {
             
             context.searching += files.length;
 
-            files.forEach(function(pathElement, i) {
+            files.forEach(function(pathElement) {
                 let filePath = path + "/" + pathElement;
 
                 fs.stat(filePath, function(err, stat) {
@@ -111,6 +111,7 @@ let fileInfo = {
                             isDirectory: stat.isDirectory(),
                             children: null,
                             parent: parent,
+                            key: pathElement,
                             treeMapCache: null   // ツリーマップのキャッシュに使うスタブ
                         };
                         parent.children[pathElement] = node;
