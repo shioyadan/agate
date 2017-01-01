@@ -34,7 +34,7 @@
             $(self.refs["top_div"]).modal();
         };
         self.modal_message = function(msg) {
-            self.modal("おしらせ", msg, "おｋ");
+            self.modal("おしらせ", msg, "OK");
         };
     </script>
 </app_dialog>
@@ -118,8 +118,8 @@
     <app_navbar ref="app_navbar">
     </app_navbar>
 
-    <!-- -->
-    <div class="well well-sm" style="margin:0px;" ref="app_path_well" >
+    <!-- メッセージ -->
+    <div class="well well-sm" style="margin:0px;">
         {app.pointedPath}
     </div>
 
@@ -136,6 +136,39 @@
 
     <script>
         let self = this;
+
+        // メニュー
+        let menuTemplate = [
+            {
+                label: "ファイル",
+                submenu: [{
+                    label: "フォルダを開く",
+                    click: function(){app.openFolder();}
+                }]
+            },
+            {
+                label: "ヘルプ",
+                submenu: [
+                    {
+                        label: "開発者ツールの切り替え",
+                        click: function(){
+                            let win = require("electron").remote.getCurrentWindow();
+                            if (win.isDevToolsOpened()) {
+                                win.closeDevTools();
+                            }
+                            else {
+                                win.openDevTools();
+                            }
+                        }
+                    },
+                    {
+                        label: "バージョン情報",
+                        click: function(){app.modalDialog("agate 0.1, Ryota Shioya");}
+                    }
+                ]
+            }
+        ];
+
 
         // アプリケーションのコンテキスト
         let app = {
@@ -188,6 +221,12 @@
             // 初期化
             // タグのマウント時に呼ばれるようにする
             init: function() {
+                // メニューを追加
+                let Menu = require("electron").remote.Menu;
+                let menu = Menu.buildFromTemplate(menuTemplate);
+                Menu.setApplicationMenu(menu);
+                
+                // リサイズハンドラの設定
                 window.addEventListener("resize", self.app.onResize, false);
                 self.app.onResize();    // サイズを適用しておくために1回呼んでおく
                 self.app.openFolder();
@@ -202,7 +241,6 @@
                     }
                     self.app.pointedPath = path;
                     self.update();
-                    //self.refs.app_path_well.update();
                 });
             },
         };
