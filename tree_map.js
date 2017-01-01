@@ -158,27 +158,27 @@ function TreeMap(baseAspectX, baseAspectY, mergin){
         },
 
         // 描画領域の作成
-        createTreeMap: function(fileTree, baseWidth, baseHeight, clipRect) {
+        createTreeMap: function(fileNode, virtWidth, virtHeight, viewPort) {
 
 
-            function traverse(fileTree, areas, baseRect, level) {
-                let cache = self.getDivTree(fileTree);
-                let width = baseRect[2] - baseRect[0];
-                let height = baseRect[3] - baseRect[1];
+            function traverse(fileNode, areas, virtRect, level) {
+                let cache = self.getDivTree(fileNode);
+                let width = virtRect[2] - virtRect[0];
+                let height = virtRect[3] - virtRect[1];
 
                 for (let key in cache.areas) {
                     let ar = cache.areas[key];
 
                     let r = [
-                        baseRect[0] + ar[0] * width, 
-                        baseRect[1] + ar[1] * height, 
-                        baseRect[0] + ar[2] * width, 
-                        baseRect[1] + ar[3] * height
+                        virtRect[0] + ar[0] * width, 
+                        virtRect[1] + ar[1] * height, 
+                        virtRect[0] + ar[2] * width, 
+                        virtRect[1] + ar[3] * height
                     ];
 
                     // 範囲外なら，これ以上は探索しない
-                    if (r[0] > clipRect[2] || r[2] < clipRect[0] || 
-                        r[1] > clipRect[3] || r[3] < clipRect[1]) {
+                    if (r[0] > viewPort[2] || r[2] < viewPort[0] || 
+                        r[1] > viewPort[3] || r[3] < viewPort[1]) {
                         continue;
                     }
                     //if (r[2] - r[0] < 40 || r[3] - r[1] < 40){
@@ -188,7 +188,7 @@ function TreeMap(baseAspectX, baseAspectY, mergin){
                         key: key,
                         rect: r,
                         level: level,
-                        fileNode: fileTree.children[key]
+                        fileNode: fileNode.children[key]
                     });
                 }
 
@@ -196,7 +196,7 @@ function TreeMap(baseAspectX, baseAspectY, mergin){
 
             let wholeAreas = [];
             let curAreas = [];
-            traverse(fileTree, curAreas, [0, 0, baseWidth, baseHeight], 0);
+            traverse(fileNode, curAreas, [0, 0, virtWidth, virtHeight], 0);
             wholeAreas = wholeAreas.concat(curAreas);
 
             for (let level = 1; level < 100; level++) {
