@@ -5,7 +5,7 @@
 function TreeMap(){
     this.cachedAspectRatio = 1.0;   // (幅)/(高さ)
     this.treeMapCache = {}; // ファイルパスから分割情報へのキャッシュ
-    this.areas = []; // 生成済み領域情報
+    this.areas = null; // 生成済み領域情報
 }
 
 // ファイルノードからパスを得る
@@ -266,8 +266,34 @@ TreeMap.prototype.createTreeMap = function(
     // 位置判定のためにとっておく
     self.areas = wholeAreas;
     return wholeAreas;
-
 };
+
+// 座標からその場所のパスを得る
+TreeMap.prototype.getPathFromPoint = function(pos){
+    let self = this;
+    if (!self.areas) {
+        return null;
+    }
+
+    // 逆順にみていく
+    let fileNode = null;
+    for (let i = self.areas.length - 1; i >= 0; i--) {
+        let r = self.areas[i].rect;
+        if (r[0] < pos[0] && pos[0] < r[2] && 
+            r[1] < pos[1] && pos[1] < r[3]) {
+            fileNode = self.areas[i].fileNode;   // hit
+            break;
+        }
+    }
+
+    // ポイントされている位置にみつからなかった
+    if (!fileNode) {
+        return null;
+    }
+
+    // file tree からパスを生成
+    return self.getPathFromFileNode(fileNode);
+},
 
 
 module.exports = TreeMap;

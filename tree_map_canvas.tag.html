@@ -89,7 +89,8 @@
                     private.prevMousePoint = [e.offsetX, e.offsetY];
                     private.draw();
                 }
-                private.pointedPath = private.getPathFromPoint([e.offsetX, e.offsetY]);
+                private.pointedPath = 
+                    private.treeMap.getPathFromPoint([e.offsetX, e.offsetY]);
                 //console.log(private.pointedPath);
                 self.changePaintedPath.map(function(f){f(private.pointedPath);});
             },
@@ -296,30 +297,6 @@
                         c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
                     }
                 }
-            },
-
-            // 座標からその場所のパスを得る
-            getPathFromPoint: function(pos){
-                if (!private.areas) {
-                    return null;
-                }
-                let fileNode = null;
-                for (let i = private.areas.length - 1; i >= 0; i--) {
-                    let r = private.areas[i].rect;
-                    if (r[0] < pos[0] && pos[0] < r[2] && 
-                        r[1] < pos[1] && pos[1] < r[3]) {
-                        fileNode = private.areas[i].fileNode;   // hit
-                        break;
-                    }
-                }
-
-                // ポイントされている位置にみつからなかった
-                if (!fileNode) {
-                    return null;
-                }
-
-                // file tree からパスを生成
-                return private.treeMap.getPathFromFileNode(fileNode);
             },
 
         };
