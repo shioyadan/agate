@@ -1,10 +1,10 @@
-function FileInfo() {
+function FileInfo(){
     return this;
 }
 
 // tree で渡されてくるツリーにおいて，
 // 各ディレクトリが含む合計サイズを計算して適用する
-FileInfo.prototype.updateDirectorySize = function(tree) {
+FileInfo.prototype.updateDirectorySize = function(tree){
     let size = 0;
     for(let key in tree.children) {
         let val = tree.children[key];
@@ -14,17 +14,17 @@ FileInfo.prototype.updateDirectorySize = function(tree) {
         size += val.size;
     }
     return size;
-},
+};
 
 // path により指定したフォルダ以下のファイルツリーを取得
 // render プロセスで実行
-FileInfo.prototype.getFileTree = function(path, callback) {
+FileInfo.prototype.getFileTree = function(path, callback){
     let self = this;
     // main プロセスで getFileListBody を呼び出す
     //let remote = require("electron").remote.require("./file_info");
     //remote.getFileTreeOnMain(path, function(context, treeJSON) {
 
-    self.getFileTreeOnMain(path, function(context, treeJSON) {
+    self.getFileTreeOnMain(path, function(context, treeJSON){
 
         // JSON にシリアライズされて送られてくるので，展開する
         //tree = JSON.parse(treeJSON);
@@ -36,11 +36,11 @@ FileInfo.prototype.getFileTree = function(path, callback) {
         // 呼び出し元に返す
         callback(context, tree);
     });
-},
+};
 
 // getFileTree の実装のエントリポイント
 // main プロセスで実行
-FileInfo.prototype.getFileTreeOnMain = function(path, callback) {
+FileInfo.prototype.getFileTreeOnMain = function(path, callback){
     let self = this;
     let context = {
         count: 0,
@@ -63,7 +63,7 @@ FileInfo.prototype.getFileTreeOnMain = function(path, callback) {
     
 // getFileTree の実装
 // main プロセスで実行
-FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent) {
+FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent){
     let self = this;
     context.callCount += 1;
     /*
@@ -90,7 +90,7 @@ FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent) {
     //let fs = require("electron").remote.require("fs");
     let fs = require("fs");
 
-    fs.readdir(path, function(err, files) {
+    fs.readdir(path, function(err, files){
         // エラーでも探索対象に入っているので
         // 探索済みにカウントする必要がある
         context.searchingDir -= 1;
@@ -102,10 +102,10 @@ FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent) {
         
         context.searching += files.length;
 
-        files.forEach(function(pathElement) {
+        files.forEach(function(pathElement){
             let filePath = path + "/" + pathElement;
 
-            fs.stat(filePath, function(err, stat) {
+            fs.stat(filePath, function(err, stat){
 
                 if (err) {
                     //console.log(err);
@@ -118,7 +118,6 @@ FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent) {
                         children: null,
                         parent: parent,
                         key: pathElement,
-                        treeMapCache: null   // ツリーマップのキャッシュに使うスタブ
                     };
                     parent.children[pathElement] = node;
 
@@ -149,6 +148,6 @@ FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent) {
         });
 
     });
-}
+};
 
 module.exports = FileInfo;
