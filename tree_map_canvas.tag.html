@@ -98,6 +98,8 @@
                     private.inDrag = true;
                     private.prevMousePoint = [e.offsetX, e.offsetY];
                 }
+                // クリック時に他所にフォーカスが奪われるのを防ぐ
+                e.preventDefault();
             },
             onMouseUp: function(e) {
                 if (!(e.buttons & 1)) { // 離したので 0 になる
