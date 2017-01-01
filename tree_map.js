@@ -75,14 +75,14 @@ TreeMap.prototype.makeDivTree = function(tree) {
 
     // 再帰的にツリーを作成
     // 渡された node の中身を書き換える必要があるので注意
-    function makeDivNode(node, fileNames, fileInfo) {
+    function makeDivNode(divNode, fileNames, fileNode) {
 
         // 末端
         if (fileNames.length <= 1) {
-            node.size = fileInfo[fileNames[0]].size;
-            node.key = fileNames[0];
-            node.children = null;
-            node.fileNode = fileInfo[fileNames[0]];
+            divNode.size = fileNode[fileNames[0]].size;
+            divNode.key = fileNames[0];
+            divNode.children = null;
+            divNode.fileNode = fileNode[fileNames[0]];
             return;
         }
 
@@ -96,21 +96,21 @@ TreeMap.prototype.makeDivTree = function(tree) {
             // 左右のうち，現在小さい方に加えることでバランスさせる
             if (leftSize < rightSize) {
                 left.push(fileName);
-                leftSize += fileInfo[fileName].size;
+                leftSize += fileNode[fileName].size;
             }
             else{
                 right.push(fileName);
-                rightSize += fileInfo[fileName].size;
+                rightSize += fileNode[fileName].size;
             }
         }
 
-        node.size = leftSize + rightSize;
-        node.children = [{},{}];
-        node.key = "";
-        node.fileNode = null;
+        divNode.size = leftSize + rightSize;
+        divNode.children = [{},{}];
+        divNode.key = "";
+        divNode.fileNode = null;
 
-        makeDivNode(node.children[0], left, fileInfo);
-        makeDivNode(node.children[1], right, fileInfo);
+        makeDivNode(divNode.children[0], left, fileNode);
+        makeDivNode(divNode.children[1], right, fileNode);
     }
 
     let divTree = {};

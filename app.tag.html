@@ -151,6 +151,8 @@
             openFolder: function(){
 
                 const dialog = require("electron").remote.dialog;
+                /* global FileInfo */
+                let fileInfo = new FileInfo();
 
                 dialog.showOpenDialog(
                     null, {
@@ -159,7 +161,6 @@
                         defaultPath: "."
                     },
                     function(folderName){
-                        /* global fileInfo */
                         fileInfo.getFileTree(
                             folderName[0],  // 配列で渡される
                             function(context, tree) {
