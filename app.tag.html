@@ -133,6 +133,7 @@
         // アプリケーションのコンテキスト
         let app = {
             statusBarMessage: "フォルダを開いてください",    // 
+            remote: require("electron").remote,
 
             // ダイアログを表示
             modalDialog: function(msg){
@@ -141,7 +142,7 @@
 
             // 開発者ツールのオンオフ
             toggleDevTools: function(){
-                let win = require("electron").remote.getCurrentWindow();
+                let win = app.remote.getCurrentWindow();
                 if (win.isDevToolsOpened()) {
                     win.closeDevTools();
                 }
@@ -153,7 +154,7 @@
             // フォルダのオープン
             openFolder: function(){
 
-                const dialog = require("electron").remote.dialog;
+                const dialog = app.remote.dialog;
                 /* global FileInfo */
                 let fileInfo = new FileInfo();
 
@@ -213,7 +214,7 @@
             // タグのマウント時に呼ばれるようにする
             init: function(){
                 // メニューを追加
-                let Menu = require("electron").remote.Menu;
+                let Menu = app.remote.Menu;
                 let menu = Menu.buildFromTemplate(menuTemplate);
                 Menu.setApplicationMenu(menu);
                 
