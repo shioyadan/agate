@@ -66,7 +66,7 @@
             // マウスのイベントハンドラ
             // ダブルクリック
             onMouseDoubleClick: function(e){
-                if (private.tree) {
+                if (!private.tree) {
                     return;
                 }
                 let zoomIn = true;
@@ -78,7 +78,7 @@
 
             // マウスホイール操作
             onMouseWheel: function(e) {
-                if (private.tree) {
+                if (!private.tree) {
                     return;
                 }
                 private.startZoom(e.deltaY < 0, e.offsetX, e.offsetY);
@@ -86,7 +86,7 @@
 
             // マウス移動
             onMouseMove: function(e) {
-                if (private.tree) {
+                if (!private.tree) {
                     return;
                 }
                 if (private.inDrag){
@@ -101,7 +101,7 @@
                 self.changePaintedPath.map(function(f){f(private.pointedPath);});
             },
             onMouseDown: function(e) {
-                if (private.tree) {
+                if (!private.tree) {
                     return;
                 }
                 if (e.buttons & 1) {
@@ -112,7 +112,7 @@
                 e.preventDefault();
             },
             onMouseUp: function(e) {
-                if (private.tree) {
+                if (!private.tree) {
                     return;
                 }
                 if (!(e.buttons & 1)) { // 離したので 0 になる
