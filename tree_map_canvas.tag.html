@@ -120,7 +120,6 @@
                 }
             },
 
-
             // 拡大率の計算
             // level は指数で表す
             calcZoomRatio: function(level) {
@@ -325,6 +324,13 @@
         self.changePaintedPath = [];
         self.onPointedPathChanged = function(callback){
             self.changePaintedPath.push(callback);
+        };
+
+        self.zoomIn = function(){
+            private.startZoom(true, self.width / 2, self.height / 2);
+        };
+        self.zoomOut = function(){
+            private.startZoom(false, self.width / 2, self.height / 2);
         };
 
         // エントリポイント

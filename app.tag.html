@@ -19,20 +19,18 @@
             <div class="collapse navbar-collapse" id="id_app_navbar">
                 <!-- "navbar-right" alignes items to the right side-->
                 <ul class="nav navbar-nav navbar-left">
-                    <li>
-                        <a href="#home" onclick={onOpenFolderInternal}>
-                            <span class="glyphicon glyphicon-folder-open"></span> 
-                            フォルダを開く
-                        </a>
-                    </li>
-                    <!--
-                    <li>
-                        <a href="" onclick={closeDropDown}>
-                            <span class="glyphicon glyphicon-cog"></span>
-                            設定
-                        </a>
-                    </li>
-                    -->
+                    <li><a href="#home" onclick={onClickOpen}>
+                        <span class="glyphicon glyphicon-folder-open"></span> 
+                        フォルダを開く
+                    </a></li>
+                    <li><a href="#home" onclick={onClickZoomIn}>
+                        <span class="glyphicon glyphicon-zoom-in"></span> 
+                        拡大
+                    </a></li>
+                    <li><a href="#home" onclick={onClickZoomOut}>
+                        <span class="glyphicon glyphicon-zoom-out"></span> 
+                        縮小
+                    </a></li>
                 </ul>
             </div>
 
@@ -43,22 +41,31 @@
         let self = this;
 
         self.title = "";
-        self.onOpenFolder = null;
+        self.onOpen = null;
+        self.onZoomIn = null;
+        self.onZoomOut = null;
 
         // Update handler
-        self.on("update", function() {
+        self.on("update", function(){
         });
 
         // Close the dropdown list
-        self.closeDropDown = function() {
-            /* global $ */
+        self.closeDropDown = function(){
             $("div#id_app_navbar").collapse("hide");
         };
 
         // "Open folder" is clicked
-        self.onOpenFolderInternal = function() {
+        self.onClickOpen = function() {
             self.closeDropDown();   // Close the list after click
-            self.onOpenFolder();    // 外部から登録されたハンドラの呼び出し
+            self.onOpen();    // 外部から登録されたハンドラの呼び出し
+        };
+        self.onClickZoomIn = function() {
+            self.closeDropDown();   // Close the list after click
+            self.onZoomIn();    // 外部から登録されたハンドラの呼び出し
+        };
+        self.onClickZoomOut = function() {
+            self.closeDropDown();   // Close the list after click
+            self.onZoomOut();    // 外部から登録されたハンドラの呼び出し
         };
 
         // 高さを取得
@@ -215,12 +222,14 @@
                 self.app.onResize();    // サイズを適用しておくために1回呼んでおく
 
                 // フォルダを開くのバインド
-                self.refs.app_navbar.onOpenFolder = app.openFolder;
+                self.refs.app_navbar.onOpen = app.openFolder;
+                self.refs.app_navbar.onZoomIn = self.refs.tree_map_canvas.zoomIn;
+                self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
 
                 // パスが変わったときのハンドラの設定
                 self.refs.tree_map_canvas.onPointedPathChanged(function(path){
                     if (!path) {
-                        path = "Invalid";
+                        return;
                     }
                     self.app.statusBarMessage = path;
                     self.update();
