@@ -9,7 +9,8 @@
 
         // タイルマップの初期解像度
         // タイルマップ自体が拡大縮小され，それをビューポート経由で覗いてる構造になる
-        let BASE_SIZE = [1600, 900];    
+        // マウント時に，そのサイズで初期化される
+        self.BASE_SIZE = [0, 0];    
 
         let ZOOM_RATIO = 0.8;   // 一回に拡大縮小する率 (2^ZOOM_RATIO)
         let ZOOM_ANIMATION_SPEED = 0.07;    // ZOOM_RATIO のフレーム当たり加算値
@@ -43,6 +44,8 @@
         // タグのマウント時に呼ばれるようにする
         self.init = function(){
             let canvas = self.refs.canvas;
+
+            self.BASE_SIZE = [canvas.height*16/9, canvas.height];
 
             canvas.ondblclick = self.onMouseDoubleClick;
             canvas.onmousewheel = self.onMouseWheel;
@@ -207,8 +210,8 @@
             let height = canvas.height;
 
             let zoom = self.calcZoomRatio(self.zoomLevel);
-            let virtualWidth = BASE_SIZE[0] * zoom;
-            let virtualHeight = BASE_SIZE[1] * zoom;
+            let virtualWidth = self.BASE_SIZE[0] * zoom;
+            let virtualHeight = self.BASE_SIZE[1] * zoom;
 
             self.treeMapRenderer.render(
                 canvas, 
