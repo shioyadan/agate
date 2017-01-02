@@ -45,10 +45,6 @@
         self.onZoomIn = null;
         self.onZoomOut = null;
 
-        // Update handler
-        self.on("update", function(){
-        });
-
         // Close the dropdown list
         self.closeDropDown = function(){
             $("div#id_app_navbar").collapse("hide");
@@ -92,7 +88,7 @@
     <!-- メッセージ -->
     <div class="panel panel-info" style="margin:0px;" ref="status_bar">
         <div class="panel-heading">
-            {app.statusBarMessage}
+            {statusBarMessage}
 	    </div>
     </div>
 
@@ -111,7 +107,7 @@
                 label: "ファイル",
                 submenu: [{
                     label: "フォルダを開く",
-                    click: function(){app.oopenFolder();}
+                    click: function(){self.openFolder();}
                 }]
             },
             {
@@ -119,136 +115,128 @@
                 submenu: [
                     {
                         label: "開発者ツールの切り替え",
-                        click: function(){app.toggleDevTools();}
+                        click: function(){self.toggleDevTools();}
                     },
                     {
                         label: "バージョン情報",
-                        click: function(){app.modalDialog("agate 0.1, Ryota Shioya");}
+                        click: function(){self.modalDialog("agate 0.1, Ryota Shioya");}
                     }
                 ]
             }
         ];
 
+        self.statusBarMessage = "フォルダを開いてください";    // 
+        self.remote = require("electron").remote;
 
-        // アプリケーションのコンテキスト
-        let app = {
-            statusBarMessage: "フォルダを開いてください",    // 
-            remote: require("electron").remote,
-
-            // ダイアログを表示
-            modalDialog: function(msg){
-                self.tags.modal_dialog.modal_message(msg);
-            },
-
-            // 開発者ツールのオンオフ
-            toggleDevTools: function(){
-                let win = app.remote.getCurrentWindow();
-                if (win.isDevToolsOpened()) {
-                    win.closeDevTools();
-                }
-                else {
-                    win.openDevTools();
-                }
-            },
-
-            // フォルダのオープン
-            openFolder: function(){
-
-                const dialog = app.remote.dialog;
-                /* global FileInfo */
-                let fileInfo = new FileInfo();
-
-                dialog.showOpenDialog(
-                    null, {
-                        properties: ["openDirectory"],
-                        title: "フォルダを選んでください",
-                        defaultPath: "."
-                    },
-                    function(folderName){
-                        if (!folderName) {
-                            return;
-                        }
-                        fileInfo.getFileTree(
-                            folderName[0],  // 配列で渡される
-                            function(context, tree) {
-                                self.refs.tree_map_canvas.setTree(tree);
-                                app.statusBarMessage = 
-                                    "\"" + folderName[0] + "\"から " + 
-                                    context.count + " 個のファイル/フォルダを読み込みました";
-                                self.update();
-                                self.app.onResize();
-                            },
-                            function(context, filePath) {
-                                app.statusBarMessage = 
-                                    "" + context.count + " 個のファイル/フォルダを読み込みました．" + 
-                                    "現在 \"" + filePath + "\" を読み込んでいます．";
-                                self.update();
-                                self.app.onResize();
-                            }
-                        );
-                    }
-                );
-            },
-
-            // リサイズハンドラ
-            onResize: function(){
-                // CSS で指定するとぼける
-                // キャンバスのサイズを無理矢理変更する必要がある
-                let canvas = self.refs.tree_map_canvas;
-                let canvasHolder = self.refs.canvas_holder;
-
-                canvasHolder.style.width = "" + document.body.offsetWidth + "px";
-
-                let bodyHeight = 
-                    document.body.offsetHeight - 
-                    self.tags.app_navbar.getHeight() -
-                    self.refs.status_bar.offsetHeight;
-                canvasHolder.style.height = "" + bodyHeight + "px";
-
-                canvas.width = canvasHolder.offsetWidth;
-                canvas.height = canvasHolder.offsetHeight;
-                canvas.update();
-            },
-
-            // 初期化
-            // タグのマウント時に呼ばれるようにする
-            init: function(){
-                // メニューを追加
-                let Menu = app.remote.Menu;
-                let menu = Menu.buildFromTemplate(menuTemplate);
-                Menu.setApplicationMenu(menu);
-                
-                // リサイズハンドラの設定
-                window.addEventListener("resize", self.app.onResize, false);
-                self.app.onResize();    // サイズを適用しておくために1回呼んでおく
-
-                // フォルダを開くのバインド
-                self.refs.app_navbar.onOpen = app.openFolder;
-                self.refs.app_navbar.onZoomIn = self.refs.tree_map_canvas.zoomIn;
-                self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
-
-                // パスが変わったときのハンドラの設定
-                self.refs.tree_map_canvas.onPointedPathChanged(function(path){
-                    if (!path) {
-                        return;
-                    }
-                    self.app.statusBarMessage = path;
-                    self.update();
-                    self.app.onResize();
-                });
-
-                // 一回開く
-                self.app.openFolder();
-            },
+        // ダイアログを表示
+        self.modalDialog = function(msg){
+            self.tags.modal_dialog.modal_message(msg);
         };
 
-        // self にいれておく
-        self.app = app;
+        // 開発者ツールのオンオフ
+        self.toggleDevTools = function(){
+            let win = self.remote.getCurrentWindow();
+            if (win.isDevToolsOpened()) {
+                win.closeDevTools();
+            }
+            else {
+                win.openDevTools();
+            }
+        };
 
+        // フォルダのオープン
+        self.openFolder = function(){
+
+            const dialog = self.remote.dialog;
+            /* global FileInfo */
+            let fileInfo = new FileInfo();
+
+            dialog.showOpenDialog(
+                null, {
+                    properties: ["openDirectory"],
+                    title: "フォルダを選んでください",
+                    defaultPath: "."
+                },
+                function(folderName){
+                    if (!folderName) {
+                        return;
+                    }
+                    fileInfo.getFileTree(
+                        folderName[0],  // 配列で渡される
+                        function(context, tree) {
+                            self.refs.tree_map_canvas.setTree(tree);
+                            self.statusBarMessage = 
+                                "\"" + folderName[0] + "\"から " + 
+                                context.count + " 個のファイル/フォルダを読み込みました";
+                            self.update();
+                            self.onResize();
+                        },
+                        function(context, filePath) {
+                            self.statusBarMessage = 
+                                "" + context.count + " 個のファイル/フォルダを読み込みました．" + 
+                                "現在 \"" + filePath + "\" を読み込んでいます．";
+                            self.update();
+                            self.onResize();
+                        }
+                    );
+                }
+            );
+        };
+
+        // リサイズハンドラ
+        self.onResize = function(){
+            // CSS で指定するとぼける
+            // キャンバスのサイズを無理矢理変更する必要がある
+            let canvas = self.refs.tree_map_canvas;
+            let canvasHolder = self.refs.canvas_holder;
+
+            canvasHolder.style.width = "" + document.body.offsetWidth + "px";
+
+            let bodyHeight = 
+                document.body.offsetHeight - 
+                self.tags.app_navbar.getHeight() -
+                self.refs.status_bar.offsetHeight;
+            canvasHolder.style.height = "" + bodyHeight + "px";
+
+            canvas.width = canvasHolder.offsetWidth;
+            canvas.height = canvasHolder.offsetHeight;
+            canvas.update();
+        };
+
+        // 初期化
+        // タグのマウント時に呼ばれるようにする
+        self.init = function(){
+            // メニューを追加
+            let Menu = self.remote.Menu;
+            let menu = Menu.buildFromTemplate(menuTemplate);
+            Menu.setApplicationMenu(menu);
+            
+            // リサイズハンドラの設定
+            window.addEventListener("resize", self.onResize, false);
+            self.onResize();    // サイズを適用しておくために1回呼んでおく
+
+            // フォルダを開くのバインド
+            self.refs.app_navbar.onOpen = self.openFolder;
+            self.refs.app_navbar.onZoomIn = self.refs.tree_map_canvas.zoomIn;
+            self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
+
+            // パスが変わったときのハンドラの設定
+            self.refs.tree_map_canvas.onPointedPathChanged(function(path){
+                if (!path) {
+                    return;
+                }
+                self.statusBarMessage = path;
+                self.update();
+                self.onResize();
+            });
+
+            // 一回開く
+            self.openFolder();
+        };
 
         // エントリポイント
         // マウント時に初期化を行う
-        self.on("mount", app.init);
+        self.on("mount", self.init);
 
     </script>
 </app>
