@@ -80,7 +80,7 @@
     <app_navbar ref="app_navbar">
     </app_navbar>
 
-    <!-- ツリーマップ style="width:100%; height:100%;" -->
+    <!-- ツリーマップ -->
     <div ref="canvas_holder">
         <tree_map_canvas ref="tree_map_canvas"></tree_map_canvas>
     </div>
@@ -221,14 +221,14 @@
             self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
 
             // パスが変わったときのハンドラの設定
-            self.refs.tree_map_canvas.onPointedPathChanged(function(path){
+            self.refs.tree_map_canvas.onPointedPathChanged = function(path){
                 if (!path) {
                     return;
                 }
                 self.statusBarMessage = path;
                 self.update();
                 self.onResize();
-            });
+            };
 
             // 一回開く
             self.openFolder();

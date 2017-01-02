@@ -98,7 +98,9 @@
             self.pointedPath = 
                 self.treeMap.getPathFromPoint([e.offsetX, e.offsetY]);
             //console.log(self.pointedPath);
-            self.changePaintedPath.map(function(f){f(self.pointedPath);});
+            if (self.onPointedPathChanged) {
+                self.onPointedPathChanged(self.pointedPath);
+            }
         };
 
         self.onMouseDown = function(e){
@@ -319,10 +321,7 @@
         };
 
         // ポイントされてる部分のパスが変わったときのハンドラ
-        self.changePaintedPath = [];
-        self.onPointedPathChanged = function(callback){
-            self.changePaintedPath.push(callback);
-        };
+        self.onPointedPathChanged = null;
 
         self.zoomIn = function(){
             self.startZoom(true, self.width / 2, self.height / 2);
