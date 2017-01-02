@@ -48,17 +48,18 @@
         };
 
         // "Open folder" is clicked
+        /* global ACTION */
         self.onClickOpen = function() {
             self.closeDropDown();   // Close the list after click
-            RiotControl.trigger("folder_open");
+            RiotControl.trigger(ACTION.FOLDER_OPEN);
         };
         self.onClickZoomIn = function() {
             self.closeDropDown();   // Close the list after click
-            RiotControl.trigger("canvas_zoom_in");
+            RiotControl.trigger(ACTION.CANVAS_ZOOM_IN);
         };
         self.onClickZoomOut = function() {
             self.closeDropDown();   // Close the list after click
-            RiotControl.trigger("canvas_zoom_out");
+            RiotControl.trigger(ACTION.CANVAS_ZOOM_OUT);
         };
 
         // 高さを取得
@@ -104,7 +105,7 @@
                 label: "ファイル",
                 submenu: [{
                     label: "フォルダを開く",
-                    click: function(){RiotControl.trigger("folder_open");}
+                    click: function(){RiotControl.trigger(ACTION.FOLDER_OPEN);}
                 }]
             },
             {
@@ -159,7 +160,7 @@
             canvas.width = canvasHolder.offsetWidth;
             canvas.height = canvasHolder.offsetHeight;
             canvas.update();
-            RiotControl.trigger("canvas_resized", canvas.width, canvas.height);
+            RiotControl.trigger(ACTION.CANVAS_RESIZED, canvas.width, canvas.height);
         };
 
         // 初期化
@@ -175,12 +176,11 @@
             self.onResize();    // サイズを適用しておくために1回呼んでおく
 
             // 一回開く
-            RiotControl.trigger("folder_open");
+            RiotControl.trigger(ACTION.FOLDER_OPEN);
         };
 
         // 読み込み終了時
-        RiotControl.on("tree_loaded", function(store){
-            self.refs.tree_map_canvas.setTree(store.tree);
+        RiotControl.on(ACTION.TREE_LOADED, function(store){
             self.statusBarMessage = 
                 "\"" + store.treeFolderName + "\"から " + 
                 store.treeLoadState.count + " 個のファイル/フォルダを読み込みました";
@@ -189,7 +189,7 @@
         });
 
         // 読み込み中に定期的に呼ばれる
-        RiotControl.on("tree_loading", function(store){
+        RiotControl.on(ACTION.TREE_LOADING, function(store){
             self.statusBarMessage = 
                 "" + store.treeLoadState.count + " 個のファイル/フォルダを読み込みました．" + 
                 "現在 \"" + store.treeCurrentLoadingFileName + "\" を読み込んでいます．";
@@ -198,7 +198,7 @@
         });
 
         // 読み込みダイアログ
-        RiotControl.on("folder_open", function(){
+        RiotControl.on(ACTION.FOLDER_OPEN, function(){
             const dialog = self.remote.dialog;
             dialog.showOpenDialog(
                 null, {
@@ -210,14 +210,14 @@
                     if (!folderName) {
                         return;
                     }
-                    /* global RiotControl*/
-                    RiotControl.trigger("tree_load", folderName[0]);
+                    /* global RiotControl ACTION */
+                    RiotControl.trigger(ACTION.TREE_LOAD, folderName[0]);
                 }
             );
         });
 
         // キャンバス上でのマウスポインタの位置が変わったとき
-        RiotControl.on("canvas_pointer_changed", function(store){
+        RiotControl.on(ACTION.CANVAS_POINTER_CHANGED, function(store){
             let path = store.pointedPath;
             let fileNode = store.pointedFileNode;
             if (!path) {

@@ -19,7 +19,7 @@
         self.tree = null;
 
         // ツリーマップ
-        /*global TreeMapRenderer RiotControl */ 
+        /*global TreeMapRenderer RiotControl ACTION */ 
         self.treeMapRenderer = new TreeMapRenderer();
 
         // 表示系
@@ -92,7 +92,7 @@
             let pointedPath = 
                 self.treeMapRenderer.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
-            RiotControl.trigger("canvas_pointer_change", pointedPath, pointedFileNode);
+            RiotControl.trigger(ACTION.CANVAS_POINTER_CHANGE, pointedPath, pointedFileNode);
         };
 
         self.onMouseDown = function(e){
@@ -226,16 +226,16 @@
         };
 
         // ファイルツリー情報をセット
-        self.setTree = function(tree){
-            self.tree = tree;
+        RiotControl.on(ACTION.TREE_LOADED, function(store){
+            self.tree = store.tree;
             self.draw();
-        };
+        });
 
         // ズーム
-        RiotControl.on("canvas_zoom_in", function(){
+        RiotControl.on(ACTION.CANVAS_ZOOM_IN, function(){
             self.startZoom(true, self.width / 2, self.height / 2);
         });
-        RiotControl.on("canvas_zoom_out", function(){
+        RiotControl.on(ACTION.CANVAS_ZOOM_OUT, function(){
             self.startZoom(false, self.width / 2, self.height / 2);
         });
 

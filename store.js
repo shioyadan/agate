@@ -1,3 +1,15 @@
+const ACTION = {
+    TREE_LOAD: 0,
+    TREE_LOADED: 1,
+    TREE_LOADING: 2,
+    CANVAS_RESIZED: 3,
+    CANVAS_POINTER_CHANGE: 4,
+    CANVAS_POINTER_CHANGED: 5,
+    CANVAS_ZOOM_IN: 6,
+    CANVAS_ZOOM_OUT: 7,
+    FOLDER_OPEN: 8,
+};
+
 function Store(){
     /* globals riot FileInfo */
     riot.observable(this);
@@ -17,7 +29,7 @@ function Store(){
 
     self.fileInfo_ = new FileInfo();
 
-    self.on("tree_load", function(folderName) {
+    self.on(ACTION.TREE_LOAD, function(folderName) {
         self.treeFolderName = folderName;
 
         self.fileInfo_.getFileTree(
@@ -26,28 +38,28 @@ function Store(){
                 // 読み込み終了
                 self.tree = tree;
                 self.treeLoadState = state;
-                self.trigger("tree_loaded", self);       
+                self.trigger(ACTION.TREE_LOADED, self);       
             },
             function(state, filePath) {
                 // 読み込み状態の更新
                 self.treeLoadState = state;
                 self.treeCurrentLoadingFileName = filePath;
-                self.trigger("tree_loading", self);       
+                self.trigger(ACTION.TREE_LOADING, self);       
             }
         );
     });
 
-    self.on("canvas_resized", function(width, height){
+    self.on(ACTION.CANVAS_RESIZED, function(width, height){
         self.width = width;
         self.height = height;
     });
 
-    self.on("canvas_pointer_change", function(path, fileNode){
+    self.on(ACTION.CANVAS_POINTER_CHANGE, function(path, fileNode){
         self.pointedPath = path;
         self.pointedFileNode = fileNode;
-        self.trigger("canvas_pointer_changed", self);       
+        self.trigger(ACTION.CANVAS_POINTER_CHANGED, self);       
     });
-
 }
+
 
 module.exports = Store;
