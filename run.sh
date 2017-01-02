@@ -1,1 +1,0 @@
-../electron-v0.34.0-win32-x64/electron.exe --debug . --development 
