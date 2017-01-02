@@ -50,7 +50,7 @@ TreeMapRenderer.prototype.render = function(
     let fillStyle = [];
     //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
     let strokeStyle = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
         fillStyle.push("hsl(" + ((0+i*30)%360) + ", 50%, 80%)");
         strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
     }
