@@ -10,6 +10,10 @@ function TreeMap(){
 
 // ファイルノードからパスを得る
 TreeMap.prototype.getPathFromFileNode = function(fileNode){
+    if (!fileNode) {
+        return null;
+    }
+    
     // file tree からパスを生成
     let path = fileNode.key;
     fileNode = fileNode.parent;

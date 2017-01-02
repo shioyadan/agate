@@ -221,11 +221,24 @@
             self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
 
             // パスが変わったときのハンドラの設定
-            self.refs.tree_map_canvas.onPointedPathChanged = function(path){
+            self.refs.tree_map_canvas.onPointedPathChanged = function(path, fileNode){
                 if (!path) {
                     return;
                 }
-                self.statusBarMessage = path;
+
+                function sizeToStr(size) {
+                    if (size > 1024*1024) {
+                        return "" + Math.ceil(size/1024/1024) + " MB";
+                    }
+                    else if (size > 1024) {
+                        return "" + Math.ceil(size/1024) + " KB";
+                    }
+                    else {
+                        return "" + size + " B";
+                    }
+                }
+
+                self.statusBarMessage = path + " [" + sizeToStr(fileNode.size) + "]";
                 self.update();
                 self.onResize();
             };

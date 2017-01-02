@@ -43,9 +43,6 @@
         self.inDrag = false;  // マウスでドラッグ中か
         self.prevMousePoint = [0, 0]; // 前回のマウスポインタの位置
 
-        // 現在ポイントされているフォルダ/ファイルのパス
-        self.pointedPath = null;
-
         // リモートモジュール
         self.remote = require("electron").remote;
 
@@ -95,11 +92,13 @@
                 self.prevMousePoint = [e.offsetX, e.offsetY];
                 self.draw();
             }
-            self.pointedPath = 
-                self.treeMap.getPathFromPoint([e.offsetX, e.offsetY]);
+            let pointedFileNode = 
+                self.treeMap.getFileNodeFromPoint([e.offsetX, e.offsetY]);
+            let pointedPath = 
+                self.treeMap.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
             if (self.onPointedPathChanged) {
-                self.onPointedPathChanged(self.pointedPath);
+                self.onPointedPathChanged(pointedPath, pointedFileNode);
             }
         };
 
