@@ -33,6 +33,11 @@ function Store(){
             }
         );
     });
+
+    self.on("canvas_resized", function(width, height){
+        self.width = width;
+        self.height = height;
+    });
 }
 
 module.exports = Store;

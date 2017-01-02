@@ -41,7 +41,6 @@
         let self = this;
 
         self.title = "";
-        self.onOpen = null;
         self.onZoomIn = null;
         self.onZoomOut = null;
 
@@ -53,7 +52,7 @@
         // "Open folder" is clicked
         self.onClickOpen = function() {
             self.closeDropDown();   // Close the list after click
-            self.onOpen();    // 外部から登録されたハンドラの呼び出し
+            RiotControl.trigger("folder_open");
         };
         self.onClickZoomIn = function() {
             self.closeDropDown();   // Close the list after click
@@ -107,7 +106,7 @@
                 label: "ファイル",
                 submenu: [{
                     label: "フォルダを開く",
-                    click: function(){self.openFolder();}
+                    click: function(){RiotControl.trigger("folder_open");}
                 }]
             },
             {
@@ -144,26 +143,6 @@
             }
         };
 
-        // フォルダのオープン
-        self.openFolder = function(){
-
-            const dialog = self.remote.dialog;
-            dialog.showOpenDialog(
-                null, {
-                    properties: ["openDirectory"],
-                    title: "フォルダを選んでください",
-                    defaultPath: "."
-                },
-                function(folderName){
-                    if (!folderName) {
-                        return;
-                    }
-                    /* global RiotControl*/
-                    RiotControl.trigger("tree_load", folderName[0]);
-                }
-            );
-        };
-
         // リサイズハンドラ
         self.onResize = function(){
             // CSS で指定するとぼける
@@ -182,6 +161,7 @@
             canvas.width = canvasHolder.offsetWidth;
             canvas.height = canvasHolder.offsetHeight;
             canvas.update();
+            RiotControl.trigger("canvas_resized", canvas.width, canvas.height);
         };
 
         // 初期化
@@ -225,7 +205,7 @@
             };
 
             // 一回開く
-            self.openFolder();
+            RiotControl.trigger("folder_open");
         };
 
         // 読み込み終了時
@@ -245,9 +225,26 @@
                 "現在 \"" + store.treeCurrentLoadingFileName + "\" を読み込んでいます．";
             self.update();
             self.onResize();
-
         });
 
+        // 読み込みダイアログ
+        RiotControl.on("folder_open", function(){
+            const dialog = self.remote.dialog;
+            dialog.showOpenDialog(
+                null, {
+                    properties: ["openDirectory"],
+                    title: "フォルダを選んでください",
+                    defaultPath: "."
+                },
+                function(folderName){
+                    if (!folderName) {
+                        return;
+                    }
+                    /* global RiotControl*/
+                    RiotControl.trigger("tree_load", folderName[0]);
+                }
+            );
+        });
 
 
         // エントリポイント
