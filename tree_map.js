@@ -269,7 +269,7 @@ TreeMap.prototype.createTreeMap = function(
 };
 
 // 座標からその場所のパスを得る
-TreeMap.prototype.getPathFromPoint = function(pos){
+TreeMap.prototype.getFileNodeFromPoint = function(pos){
     let self = this;
     if (!self.areas) {
         return null;
@@ -286,6 +286,14 @@ TreeMap.prototype.getPathFromPoint = function(pos){
         }
     }
 
+    return fileNode;
+};
+
+// 座標からその場所のパスを得る
+TreeMap.prototype.getPathFromPoint = function(pos){
+    let self = this;
+    let fileNode = self.getFileNodeFromPoint(pos);
+
     // ポイントされている位置にみつからなかった
     if (!fileNode) {
         return null;
@@ -294,6 +302,8 @@ TreeMap.prototype.getPathFromPoint = function(pos){
     // file tree からパスを生成
     return self.getPathFromFileNode(fileNode);
 },
+
+
 
 
 module.exports = TreeMap;

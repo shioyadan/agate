@@ -21,8 +21,6 @@
         let ZOOM_RATIO = 0.8;   // 一回に拡大縮小する率 (2^ZOOM_RATIO)
         let ZOOM_ANIMATION_SPEED = 0.07;    // ZOOM_RATIO のフレーム当たり加算値
         
-
-
         // ツリーマップ
         /*global TreeMap*/ 
         self.treeMap = new TreeMap();
@@ -48,6 +46,8 @@
         // 現在ポイントされているフォルダ/ファイルのパス
         self.pointedPath = null;
 
+        // リモートモジュール
+        self.remote = require("electron").remote;
 
         // 初期化
         // タグのマウント時に呼ばれるようにする
@@ -70,7 +70,7 @@
                 return;
             }
             let zoomIn = true;
-            if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック or シフトキー
+            if (e.shiftKey) {    // シフトキー時は縮小
                 zoomIn = false; 
             }
             self.startZoom(zoomIn, e.clientX, e.clientY);
@@ -107,10 +107,16 @@
             if (!self.tree) {
                 return;
             }
+            // 右クリック
             if (e.buttons & 1) {
                 self.inDrag = true;
                 self.prevMousePoint = [e.offsetX, e.offsetY];
             }
+            // 左クリック
+            if (e.buttons & 2) {
+                self.popupMenu([e.offsetX, e.offsetY]);
+            }
+
             // クリック時に他所にフォーカスが奪われるのを防ぐ
             e.preventDefault();
         };
@@ -121,6 +127,29 @@
             }
             if (!(e.buttons & 1)) { // 離したので 0 になる
                 self.inDrag = false;
+            }
+        };
+
+        // ポップアップメニューの表示
+        self.popupMenu = function(pos){
+            let fileNode = self.treeMap.getFileNodeFromPoint(pos);
+            if (fileNode) {
+                let label = "\"" + fileNode.key + "\" を開く";
+                if (!fileNode.isDirectory) {
+                    label = "\"" + fileNode.key + "\" があるフォルダを開く";
+                    fileNode = fileNode.parent;
+                }
+                let path = self.treeMap.getPathFromFileNode(fileNode);
+                let menuTemplate = [
+                    {
+                        label: label,
+                        click: function(){
+                            self.remote.shell.openItem(path);
+                        }
+                    },
+                ];
+                let menu = self.remote.Menu.buildFromTemplate(menuTemplate);
+                menu.popup(self.remote.getCurrentWindow());
             }
         };
 
@@ -321,6 +350,7 @@
         };
 
         // ポイントされてる部分のパスが変わったときのハンドラ
+        // 外部から設定する
         self.onPointedPathChanged = null;
 
         self.zoomIn = function(){
