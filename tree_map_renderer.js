@@ -21,6 +21,9 @@ TreeMapRenderer.prototype.getPathFromFileNode = function(fileNode)
     return this.treeMap_.getPathFromFileNode(fileNode);
 };
 
+// canvas に対し，tree のファイルツリーを
+// virtualWidth/virtualHeight に対応した大きさの tree map を生成し，
+// そこの上の viewPort を描画する．
 TreeMapRenderer.prototype.render = function(
     canvas, tree, virtualWidth, virtualHeight, viewPort
 ){
@@ -48,7 +51,7 @@ TreeMapRenderer.prototype.render = function(
     //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
     let strokeStyle = [];
     for (let i = 0; i < 10; i++) {
-        fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
+        fillStyle.push("hsl(" + ((0+i*30)%360) + ", 50%, 80%)");
         strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
     }
 
