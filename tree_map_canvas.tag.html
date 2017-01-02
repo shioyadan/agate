@@ -22,302 +22,300 @@
         let ZOOM_ANIMATION_SPEED = 0.07;    // ZOOM_RATIO のフレーム当たり加算値
         
 
-        let private = {
 
-            // ツリーマップ
-            /*global TreeMap*/ 
-            treeMap: new TreeMap(),
+        // ツリーマップ
+        /*global TreeMap*/ 
+        self.treeMap = new TreeMap();
 
-            // ファイルツリー
-            tree: null,
+        // ファイルツリー
+        self.tree = null;
 
-            // 表示系
-            zoomLevel: 0,   // 拡大率
-            viewPoint: [0, 0],  // タイルマップ上における表示領域の左上の座標
+        // 表示系
+        self.zoomLevel = 0;   // 拡大率
+        self.viewPoint =  [0, 0],  // タイルマップ上における表示領域の左上の座標
 
-            // ズームのアニメーション
-            inZoomAnimation: false,
-            zoomEndLevel: 0,
-            zoomBasePoint: [0, 0],
-            zoomAnimationID: 0,
-            zoomAnimationDirection: false,
+        // ズームのアニメーション
+        self.inZoomAnimation = false;
+        self.zoomEndLevel = 0;
+        self.zoomBasePoint = [0, 0];
+        self.zoomAnimationID = 0;
+        self.zoomAnimationDirection = false;
 
-            // マウスのドラッグ
-            inDrag: false,  // マウスでドラッグ中か
-            prevMousePoint: [0, 0], // 前回のマウスポインタの位置
+        // マウスのドラッグ
+        self.inDrag = false;  // マウスでドラッグ中か
+        self.prevMousePoint = [0, 0]; // 前回のマウスポインタの位置
 
-            // 現在ポイントされているフォルダ/ファイルのパス
-            pointedPath: null,
-
-            // 初期化
-            // タグのマウント時に呼ばれるようにする
-            init: function() {
-                let canvas = self.refs.canvas;
-
-                canvas.ondblclick = self.private.onMouseDoubleClick;
-
-                canvas.onmousewheel = self.private.onMouseWheel;
-                canvas.onmousemove = self.private.onMouseMove;
-                canvas.onmousedown = self.private.onMouseDown;
-                canvas.onmouseup = self.private.onMouseUp;
-                canvas.onmouseleave = self.private.onMouseUp;
-            },        
-
-            // マウスのイベントハンドラ
-            // ダブルクリック
-            onMouseDoubleClick: function(e){
-                if (!private.tree) {
-                    return;
-                }
-                let zoomIn = true;
-                if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック or シフトキー
-                    zoomIn = false; 
-                }
-                private.startZoom(zoomIn, e.clientX, e.clientY);
-            },
-
-            // マウスホイール操作
-            onMouseWheel: function(e) {
-                if (!private.tree) {
-                    return;
-                }
-                private.startZoom(e.deltaY < 0, e.offsetX, e.offsetY);
-            },
-
-            // マウス移動
-            onMouseMove: function(e) {
-                if (!private.tree) {
-                    return;
-                }
-                if (private.inDrag){
-                    private.viewPoint[0] += private.prevMousePoint[0] - e.offsetX;
-                    private.viewPoint[1] += private.prevMousePoint[1] - e.offsetY;
-                    private.prevMousePoint = [e.offsetX, e.offsetY];
-                    private.draw();
-                }
-                private.pointedPath = 
-                    private.treeMap.getPathFromPoint([e.offsetX, e.offsetY]);
-                //console.log(private.pointedPath);
-                self.changePaintedPath.map(function(f){f(private.pointedPath);});
-            },
-            onMouseDown: function(e) {
-                if (!private.tree) {
-                    return;
-                }
-                if (e.buttons & 1) {
-                    private.inDrag = true;
-                    private.prevMousePoint = [e.offsetX, e.offsetY];
-                }
-                // クリック時に他所にフォーカスが奪われるのを防ぐ
-                e.preventDefault();
-            },
-            onMouseUp: function(e) {
-                if (!private.tree) {
-                    return;
-                }
-                if (!(e.buttons & 1)) { // 離したので 0 になる
-                    private.inDrag = false;
-                }
-            },
-
-            // 拡大率の計算
-            // level は指数で表す
-            calcZoomRatio: function(level) {
-                return Math.pow(2, level);
-            },
-
-            // ズームのスタート
-            startZoom: function(direction, offsetX, offsetY){
-                if (!private.inZoomAnimation) {
-                    // 拡大 or 縮小
-                    private.zoomAnimationDirection = direction;
-                    private.zoomEndLevel = 
-                        private.zoomLevel + (private.zoomAnimationDirection ? ZOOM_RATIO : -ZOOM_RATIO);
-                    private.zoomBasePoint = [offsetX, offsetY];
-                    private.inZoomAnimation = true;
-                    private.zoomAnimationID = setInterval(private.animateZoom, 16);
-                }
-            },
-
-            // offsetX/offsetY を基準に，newZoomLevel を適用
-            setZoomLevel: function(newZoomLevel, offsetX, offsetY) {
-                let newZoomRatio = private.calcZoomRatio(newZoomLevel);
-                let oldZoomRatio = private.calcZoomRatio(private.zoomLevel);
-
-                // ポインタの位置が拡大の前後で同じ位置を指すように変換
-                let newAbsPosX = (offsetX + private.viewPoint[0]) / oldZoomRatio * newZoomRatio;
-                let newAbsPosY = (offsetY + private.viewPoint[1]) / oldZoomRatio * newZoomRatio;
-
-                // そこからマウスポインタの位置を引いて，左上の座標を決定
-                private.viewPoint[0] = newAbsPosX - offsetX;
-                private.viewPoint[1] = newAbsPosY - offsetY;
-
-                // 新しいズームレベルを適用  
-                private.zoomLevel = newZoomLevel;
-            },
-
-            // ズームアニメーション中は，一定時間毎に呼び出される
-            animateZoom: function() {
-                if (!private.inZoomAnimation) {
-                    return;
-                }
-
-                let newZoomLevel = 
-                    private.zoomLevel + 
-                    (private.zoomAnimationDirection ? ZOOM_ANIMATION_SPEED : -ZOOM_ANIMATION_SPEED);
-                private.setZoomLevel(
-                    newZoomLevel, private.zoomBasePoint[0], private.zoomBasePoint[1]
-                );
-                private.draw();
-                if ((private.zoomAnimationDirection && newZoomLevel > private.zoomEndLevel) ||
-                    (!private.zoomAnimationDirection && newZoomLevel < private.zoomEndLevel)){
-                    private.inZoomAnimation = false;
-                    clearInterval(private.zoomAnimationID);
-                }
-            },
-
-            // 描画
-            draw: function() {
-                let canvas = self.refs.canvas;
-                let width = canvas.width;
-                let height = canvas.height;
-
-                if (!self.private.tree) {
-                    let c = canvas.getContext("2d");
-                    c.fillStyle = "rgb(200,200,200)";
-                    c.fillRect(0, 0, width, height);
-                    return;
-                }
-
-                let zoom = private.calcZoomRatio(private.zoomLevel);
-                let virtualWidth = BASE_SIZE[0] * zoom;
-                let virtualHeight = BASE_SIZE[1] * zoom;
-                let areas = private.treeMap.createTreeMap(
-                    self.private.tree, 
-                    virtualWidth, virtualHeight, 
-                    [
-                        private.viewPoint[0], 
-                        private.viewPoint[1], 
-                        private.viewPoint[0] + width, 
-                        private.viewPoint[1] + height
-                    ],
-                    TILE_MERGIN
-                );
-
-                let fillStyle = [];
-                //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
-                let strokeStyle = [];
-                for (let i = 0; i < 10; i++) {
-                    fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
-                    strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
-                }
-
-                let c = canvas.getContext("2d");
-
-                c.fillStyle = "rgb(200,200,200)";
-                c.fillRect(0, 0, width, height);
+        // 現在ポイントされているフォルダ/ファイルのパス
+        self.pointedPath = null;
 
 
-                let prevLevel = -1;
-                for (let a of areas) {
-                    let rect = a.rect;
-                    // レベルに応じた色にする
-                    if (prevLevel != a.level) {
-                        c.fillStyle = fillStyle[a.level];
-                        prevLevel = a.level;
-                    }
-                    c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-                }
+        // 初期化
+        // タグのマウント時に呼ばれるようにする
+        self.init = function(){
+            let canvas = self.refs.canvas;
 
-                prevLevel = -1;
-                for (let a of areas) {
-                    let rect = a.rect;
-                    if (prevLevel != a.level) {
-                        // 枠線の太さもレベルに応じる
-                        //c.lineWidth = Math.max(2 - a.level/2, 0.5); 
-                        c.lineWidth = 1; 
-                        // 枠線の色は，基準色から明度をおとしたものに
-                        c.strokeStyle = strokeStyle[a.level];
-                        prevLevel = a.level;
-                    }
-                    if (!a.fileNode.children) {
-                        c.lineWidth = 2; 
-                        prevLevel = -1;
-                    }
-                    c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-                }
+            canvas.ondblclick = self.onMouseDoubleClick;
 
-
-                function sizeToStr(size) {
-                    if (size > 1024*1024) {
-                        return "" + Math.ceil(size/1024/1024) + " MB";
-                    }
-                    else if (size > 1024) {
-                        return "" + Math.ceil(size/1024) + " KB";
-                    }
-                    else {
-                        return "" + size + " B";
-                    }
-                }
-
-                // 文字領域が確保できた場合は描画
-                let strAreas = areas.filter(function(a){
-                    let rect = a.rect;
-                    return (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40);
-                });
-
-                // 1回太めに文字の枠線を書く
-                c.font = "bold " + FONT_FIZE + "px Century Gothic";
-                c.lineWidth = 4; 
-                prevLevel = -1;
-
-                for (let a of strAreas) {
-                    let rect = a.rect;
-                    if (prevLevel != a.level) {
-                        c.strokeStyle = strokeStyle[a.level];
-                        prevLevel = a.level;
-                    }
-                    let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
-
-                    if (!a.fileNode.children) {
-                        // ファイル
-                        pos[0] += 10;
-                        pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
-                    }
-                    c.strokeText(a.key, pos[0], pos[1]);
-
-                    if (!a.fileNode.children) {
-                        c.strokeText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
-                    }
-                }
-
-                // 次に白を重ねて書く
-                c.fillStyle = "rgb(255,255,255)";
-                for (let a of strAreas) {
-                    let rect = a.rect;
-                    let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
-                    if (!a.fileNode.children) {
-                        // ファイル
-                        pos[0] += 10;
-                        pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
-                    }
-
-                    c.fillText(a.key, pos[0], pos[1]);
-
-                    if (!a.fileNode.children) {
-                        c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
-                    }
-                }
-            },
-
+            canvas.onmousewheel = self.onMouseWheel;
+            canvas.onmousemove = self.onMouseMove;
+            canvas.onmousedown = self.onMouseDown;
+            canvas.onmouseup = self.onMouseUp;
+            canvas.onmouseleave = self.onMouseUp;
         };
 
-        self.private = private;
+        // マウスのイベントハンドラ
+        // ダブルクリック
+        self.onMouseDoubleClick = function(e){
+            if (!self.tree) {
+                return;
+            }
+            let zoomIn = true;
+            if (e.buttons & 2 || e.shiftKey) {    // 右ダブルクリック or シフトキー
+                zoomIn = false; 
+            }
+            self.startZoom(zoomIn, e.clientX, e.clientY);
+        };
+
+        // マウスホイール操作
+        self.onMouseWheel = function(e){
+            if (!self.tree) {
+                return;
+            }
+            self.startZoom(e.deltaY < 0, e.offsetX, e.offsetY);
+        };
+
+        // マウス移動
+        self.onMouseMove = function(e){
+            if (!self.tree) {
+                return;
+            }
+            if (self.inDrag){
+                self.viewPoint[0] += self.prevMousePoint[0] - e.offsetX;
+                self.viewPoint[1] += self.prevMousePoint[1] - e.offsetY;
+                self.prevMousePoint = [e.offsetX, e.offsetY];
+                self.draw();
+            }
+            self.pointedPath = 
+                self.treeMap.getPathFromPoint([e.offsetX, e.offsetY]);
+            //console.log(self.pointedPath);
+            self.changePaintedPath.map(function(f){f(self.pointedPath);});
+        };
+
+        self.onMouseDown = function(e){
+            if (!self.tree) {
+                return;
+            }
+            if (e.buttons & 1) {
+                self.inDrag = true;
+                self.prevMousePoint = [e.offsetX, e.offsetY];
+            }
+            // クリック時に他所にフォーカスが奪われるのを防ぐ
+            e.preventDefault();
+        };
+
+        self.onMouseUp = function(e){
+            if (!self.tree) {
+                return;
+            }
+            if (!(e.buttons & 1)) { // 離したので 0 になる
+                self.inDrag = false;
+            }
+        };
+
+        // 拡大率の計算
+        // level は指数で表す
+        self.calcZoomRatio = function(level){
+            return Math.pow(2, level);
+        };
+
+        // ズームのスタート
+        self.startZoom = function(direction, offsetX, offsetY){
+            if (!self.inZoomAnimation) {
+                // 拡大 or 縮小
+                self.zoomAnimationDirection = direction;
+                self.zoomEndLevel = 
+                    self.zoomLevel + (self.zoomAnimationDirection ? ZOOM_RATIO : -ZOOM_RATIO);
+                self.zoomBasePoint = [offsetX, offsetY];
+                self.inZoomAnimation = true;
+                self.zoomAnimationID = setInterval(self.animateZoom, 16);
+            }
+        };
+
+        // offsetX/offsetY を基準に，newZoomLevel を適用
+        self.setZoomLevel = function(newZoomLevel, offsetX, offsetY){
+            let newZoomRatio = self.calcZoomRatio(newZoomLevel);
+            let oldZoomRatio = self.calcZoomRatio(self.zoomLevel);
+
+            // ポインタの位置が拡大の前後で同じ位置を指すように変換
+            let newAbsPosX = (offsetX + self.viewPoint[0]) / oldZoomRatio * newZoomRatio;
+            let newAbsPosY = (offsetY + self.viewPoint[1]) / oldZoomRatio * newZoomRatio;
+
+            // そこからマウスポインタの位置を引いて，左上の座標を決定
+            self.viewPoint[0] = newAbsPosX - offsetX;
+            self.viewPoint[1] = newAbsPosY - offsetY;
+
+            // 新しいズームレベルを適用  
+            self.zoomLevel = newZoomLevel;
+        };
+
+        // ズームアニメーション中は，一定時間毎に呼び出される
+        self.animateZoom = function(){
+            if (!self.inZoomAnimation) {
+                return;
+            }
+
+            let newZoomLevel = 
+                self.zoomLevel + 
+                (self.zoomAnimationDirection ? ZOOM_ANIMATION_SPEED : -ZOOM_ANIMATION_SPEED);
+            self.setZoomLevel(
+                newZoomLevel, self.zoomBasePoint[0], self.zoomBasePoint[1]
+            );
+            self.draw();
+            if ((self.zoomAnimationDirection && newZoomLevel > self.zoomEndLevel) ||
+                (!self.zoomAnimationDirection && newZoomLevel < self.zoomEndLevel)){
+                self.inZoomAnimation = false;
+                clearInterval(self.zoomAnimationID);
+            }
+        };
+
+        // 描画
+        self.draw = function(){
+            let canvas = self.refs.canvas;
+            let width = canvas.width;
+            let height = canvas.height;
+
+            if (!self.tree) {
+                let c = canvas.getContext("2d");
+                c.fillStyle = "rgb(200,200,200)";
+                c.fillRect(0, 0, width, height);
+                return;
+            }
+
+            let zoom = self.calcZoomRatio(self.zoomLevel);
+            let virtualWidth = BASE_SIZE[0] * zoom;
+            let virtualHeight = BASE_SIZE[1] * zoom;
+            let areas = self.treeMap.createTreeMap(
+                self.tree, 
+                virtualWidth, virtualHeight, 
+                [
+                    self.viewPoint[0], 
+                    self.viewPoint[1], 
+                    self.viewPoint[0] + width, 
+                    self.viewPoint[1] + height
+                ],
+                TILE_MERGIN
+            );
+
+            let fillStyle = [];
+            //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
+            let strokeStyle = [];
+            for (let i = 0; i < 10; i++) {
+                fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
+                strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
+            }
+
+            let c = canvas.getContext("2d");
+
+            c.fillStyle = "rgb(200,200,200)";
+            c.fillRect(0, 0, width, height);
+
+
+            let prevLevel = -1;
+            for (let a of areas) {
+                let rect = a.rect;
+                // レベルに応じた色にする
+                if (prevLevel != a.level) {
+                    c.fillStyle = fillStyle[a.level];
+                    prevLevel = a.level;
+                }
+                c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+            }
+
+            prevLevel = -1;
+            for (let a of areas) {
+                let rect = a.rect;
+                if (prevLevel != a.level) {
+                    // 枠線の太さもレベルに応じる
+                    //c.lineWidth = Math.max(2 - a.level/2, 0.5); 
+                    c.lineWidth = 1; 
+                    // 枠線の色は，基準色から明度をおとしたものに
+                    c.strokeStyle = strokeStyle[a.level];
+                    prevLevel = a.level;
+                }
+                if (!a.fileNode.children) {
+                    c.lineWidth = 2; 
+                    prevLevel = -1;
+                }
+                c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+            }
+
+
+            function sizeToStr(size) {
+                if (size > 1024*1024) {
+                    return "" + Math.ceil(size/1024/1024) + " MB";
+                }
+                else if (size > 1024) {
+                    return "" + Math.ceil(size/1024) + " KB";
+                }
+                else {
+                    return "" + size + " B";
+                }
+            }
+
+            // 文字領域が確保できた場合は描画
+            let strAreas = areas.filter(function(a){
+                let rect = a.rect;
+                return (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40);
+            });
+
+            // 1回太めに文字の枠線を書く
+            c.font = "bold " + FONT_FIZE + "px Century Gothic";
+            c.lineWidth = 4; 
+            prevLevel = -1;
+
+            for (let a of strAreas) {
+                let rect = a.rect;
+                if (prevLevel != a.level) {
+                    c.strokeStyle = strokeStyle[a.level];
+                    prevLevel = a.level;
+                }
+                let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
+
+                if (!a.fileNode.children) {
+                    // ファイル
+                    pos[0] += 10;
+                    pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
+                }
+                c.strokeText(a.key, pos[0], pos[1]);
+
+                if (!a.fileNode.children) {
+                    c.strokeText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
+                }
+            }
+
+            // 次に白を重ねて書く
+            c.fillStyle = "rgb(255,255,255)";
+            for (let a of strAreas) {
+                let rect = a.rect;
+                let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
+                if (!a.fileNode.children) {
+                    // ファイル
+                    pos[0] += 10;
+                    pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
+                }
+
+                c.fillText(a.key, pos[0], pos[1]);
+
+                if (!a.fileNode.children) {
+                    c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
+                }
+            }
+        };
 
         // ファイルツリー情報をセット
         self.setTree = function(tree){
-            self.private.tree = tree;
-            self.private.draw();
+            self.tree = tree;
+            self.draw();
         };
 
         // ポイントされてる部分のパスが変わったときのハンドラ
@@ -327,22 +325,22 @@
         };
 
         self.zoomIn = function(){
-            private.startZoom(true, self.width / 2, self.height / 2);
+            self.startZoom(true, self.width / 2, self.height / 2);
         };
         self.zoomOut = function(){
-            private.startZoom(false, self.width / 2, self.height / 2);
+            self.startZoom(false, self.width / 2, self.height / 2);
         };
 
         // エントリポイント
         // マウント時に初期化を行う
-        self.on("mount", self.private.init);
+        self.on("mount", self.init);
 
         // サイズを適用
         self.on("update", function() {
             let canvas = self.refs.canvas;
             canvas.width = self.width;
             canvas.height = self.height;
-            self.private.draw();
+            self.draw();
         });
     </script>
 </tree_map_canvas>
