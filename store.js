@@ -12,6 +12,9 @@ function Store(){
     self.width = 0;
     self.height = 0;
 
+    self.pointedPath = "";
+    self.pointedFileNode = null;
+
     self.fileInfo_ = new FileInfo();
 
     self.on("tree_load", function(folderName) {
@@ -38,6 +41,13 @@ function Store(){
         self.width = width;
         self.height = height;
     });
+
+    self.on("canvas_pointer_change", function(path, fileNode){
+        self.pointedPath = path;
+        self.pointedFileNode = fileNode;
+        self.trigger("canvas_pointer_changed", self);       
+    });
+
 }
 
 module.exports = Store;

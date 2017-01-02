@@ -92,9 +92,7 @@
             let pointedPath = 
                 self.treeMapRenderer.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
-            if (self.onPointedPathChanged) {
-                self.onPointedPathChanged(pointedPath, pointedFileNode);
-            }
+            RiotControl.trigger("canvas_pointer_change", pointedPath, pointedFileNode);
         };
 
         self.onMouseDown = function(e){
@@ -232,10 +230,6 @@
             self.tree = tree;
             self.draw();
         };
-
-        // ポイントされてる部分のパスが変わったときのハンドラ
-        // 外部から設定する
-        self.onPointedPathChanged = null;
 
         // ズーム
         RiotControl.on("canvas_zoom_in", function(){

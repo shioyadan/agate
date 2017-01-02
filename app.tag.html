@@ -174,29 +174,6 @@
             window.addEventListener("resize", self.onResize, false);
             self.onResize();    // サイズを適用しておくために1回呼んでおく
 
-            // パスが変わったときのハンドラの設定
-            self.refs.tree_map_canvas.onPointedPathChanged = function(path, fileNode){
-                if (!path) {
-                    return;
-                }
-
-                function sizeToStr(size) {
-                    if (size > 1024*1024) {
-                        return "" + Math.ceil(size/1024/1024) + " MB";
-                    }
-                    else if (size > 1024) {
-                        return "" + Math.ceil(size/1024) + " KB";
-                    }
-                    else {
-                        return "" + size + " B";
-                    }
-                }
-
-                self.statusBarMessage = path + " [" + sizeToStr(fileNode.size) + "]";
-                self.update();
-                self.onResize();
-            };
-
             // 一回開く
             RiotControl.trigger("folder_open");
         };
@@ -239,6 +216,30 @@
             );
         });
 
+        // キャンバス上でのマウスポインタの位置が変わったとき
+        RiotControl.on("canvas_pointer_changed", function(store){
+            let path = store.pointedPath;
+            let fileNode = store.pointedFileNode;
+            if (!path) {
+                return;
+            }
+
+            function sizeToStr(size) {
+                if (size > 1024*1024) {
+                    return "" + Math.ceil(size/1024/1024) + " MB";
+                }
+                else if (size > 1024) {
+                    return "" + Math.ceil(size/1024) + " KB";
+                }
+                else {
+                    return "" + size + " B";
+                }
+            }
+
+            self.statusBarMessage = path + " [" + sizeToStr(fileNode.size) + "]";
+            self.update();
+            self.onResize();
+        });
 
         // エントリポイント
         // マウント時に初期化を行う
