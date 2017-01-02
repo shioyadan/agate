@@ -7,13 +7,6 @@
 
         let self = this;
 
-        // タイル内の文字のフォントサイズ
-        let FONT_FIZE = 15;
-
-        // 各タイルの中の子タイルへのマージン
-        // rect の各方向に足される
-        let TILE_MERGIN = [8, 8 + FONT_FIZE, -8, -8];
-
         // タイルマップの初期解像度
         // タイルマップ自体が拡大縮小され，それをビューポート経由で覗いてる構造になる
         let BASE_SIZE = [1600, 900];    
@@ -21,12 +14,12 @@
         let ZOOM_RATIO = 0.8;   // 一回に拡大縮小する率 (2^ZOOM_RATIO)
         let ZOOM_ANIMATION_SPEED = 0.07;    // ZOOM_RATIO のフレーム当たり加算値
         
-        // ツリーマップ
-        /*global TreeMap*/ 
-        self.treeMap = new TreeMap();
-
         // ファイルツリー
         self.tree = null;
+
+        // ツリーマップ
+        /*global TreeMapRenderer*/ 
+        self.treeMapRenderer = new TreeMapRenderer();
 
         // 表示系
         self.zoomLevel = 0;   // 拡大率
@@ -52,7 +45,6 @@
             let canvas = self.refs.canvas;
 
             canvas.ondblclick = self.onMouseDoubleClick;
-
             canvas.onmousewheel = self.onMouseWheel;
             canvas.onmousemove = self.onMouseMove;
             canvas.onmousedown = self.onMouseDown;
@@ -93,9 +85,9 @@
                 self.draw();
             }
             let pointedFileNode = 
-                self.treeMap.getFileNodeFromPoint([e.offsetX, e.offsetY]);
+                self.treeMapRenderer.treeMap.getFileNodeFromPoint([e.offsetX, e.offsetY]);
             let pointedPath = 
-                self.treeMap.getPathFromFileNode(pointedFileNode);
+                self.treeMapRenderer.treeMap.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
             if (self.onPointedPathChanged) {
                 self.onPointedPathChanged(pointedPath, pointedFileNode);
@@ -131,14 +123,14 @@
 
         // ポップアップメニューの表示
         self.popupMenu = function(pos){
-            let fileNode = self.treeMap.getFileNodeFromPoint(pos);
+            let fileNode = self.treeMapRenderer.treeMap.getFileNodeFromPoint(pos);
             if (fileNode) {
                 let label = "\"" + fileNode.key + "\" を開く";
                 if (!fileNode.isDirectory) {
                     label = "\"" + fileNode.key + "\" があるフォルダを開く";
                     fileNode = fileNode.parent;
                 }
-                let path = self.treeMap.getPathFromFileNode(fileNode);
+                let path = self.treeMapRenderer.treeMap.getPathFromFileNode(fileNode);
                 let menuTemplate = [
                     {
                         label: label,
@@ -214,132 +206,22 @@
             let width = canvas.width;
             let height = canvas.height;
 
-            if (!self.tree) {
-                let c = canvas.getContext("2d");
-                c.fillStyle = "rgb(200,200,200)";
-                c.fillRect(0, 0, width, height);
-                return;
-            }
-
             let zoom = self.calcZoomRatio(self.zoomLevel);
             let virtualWidth = BASE_SIZE[0] * zoom;
             let virtualHeight = BASE_SIZE[1] * zoom;
-            let areas = self.treeMap.createTreeMap(
+
+            self.treeMapRenderer.render(
+                canvas, 
                 self.tree, 
-                virtualWidth, virtualHeight, 
+                virtualWidth, 
+                virtualHeight, 
                 [
                     self.viewPoint[0], 
                     self.viewPoint[1], 
                     self.viewPoint[0] + width, 
                     self.viewPoint[1] + height
-                ],
-                TILE_MERGIN
+                ]
             );
-
-            let fillStyle = [];
-            //let fillFileStyle = "hsl(" + 0 + ", 70%, 70%)";
-            let strokeStyle = [];
-            for (let i = 0; i < 10; i++) {
-                fillStyle.push("hsl(" + ((0+i*30)%360) + ", 40%, 70%)");
-                strokeStyle.push("hsl(" + ((0+i*30)%360) + ", 20%, 40%)");
-            }
-
-            let c = canvas.getContext("2d");
-
-            c.fillStyle = "rgb(200,200,200)";
-            c.fillRect(0, 0, width, height);
-
-
-            let prevLevel = -1;
-            for (let a of areas) {
-                let rect = a.rect;
-                // レベルに応じた色にする
-                if (prevLevel != a.level) {
-                    c.fillStyle = fillStyle[a.level];
-                    prevLevel = a.level;
-                }
-                c.fillRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-            }
-
-            prevLevel = -1;
-            for (let a of areas) {
-                let rect = a.rect;
-                if (prevLevel != a.level) {
-                    // 枠線の太さもレベルに応じる
-                    //c.lineWidth = Math.max(2 - a.level/2, 0.5); 
-                    c.lineWidth = 1; 
-                    // 枠線の色は，基準色から明度をおとしたものに
-                    c.strokeStyle = strokeStyle[a.level];
-                    prevLevel = a.level;
-                }
-                if (!a.fileNode.children) {
-                    c.lineWidth = 2; 
-                    prevLevel = -1;
-                }
-                c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
-            }
-
-
-            function sizeToStr(size) {
-                if (size > 1024*1024) {
-                    return "" + Math.ceil(size/1024/1024) + " MB";
-                }
-                else if (size > 1024) {
-                    return "" + Math.ceil(size/1024) + " KB";
-                }
-                else {
-                    return "" + size + " B";
-                }
-            }
-
-            // 文字領域が確保できた場合は描画
-            let strAreas = areas.filter(function(a){
-                let rect = a.rect;
-                return (rect[2] - rect[0] > 80 && rect[3] - rect[1] > 40);
-            });
-
-            // 1回太めに文字の枠線を書く
-            c.font = "bold " + FONT_FIZE + "px Century Gothic";
-            c.lineWidth = 4; 
-            prevLevel = -1;
-
-            for (let a of strAreas) {
-                let rect = a.rect;
-                if (prevLevel != a.level) {
-                    c.strokeStyle = strokeStyle[a.level];
-                    prevLevel = a.level;
-                }
-                let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
-
-                if (!a.fileNode.children) {
-                    // ファイル
-                    pos[0] += 10;
-                    pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
-                }
-                c.strokeText(a.key, pos[0], pos[1]);
-
-                if (!a.fileNode.children) {
-                    c.strokeText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
-                }
-            }
-
-            // 次に白を重ねて書く
-            c.fillStyle = "rgb(255,255,255)";
-            for (let a of strAreas) {
-                let rect = a.rect;
-                let pos = [Math.max(0, rect[0]) + TILE_MERGIN[0]/2, rect[1] + FONT_FIZE];
-                if (!a.fileNode.children) {
-                    // ファイル
-                    pos[0] += 10;
-                    pos[1] += (rect[3] - rect[1] - FONT_FIZE*3) / 2;
-                }
-
-                c.fillText(a.key, pos[0], pos[1]);
-
-                if (!a.fileNode.children) {
-                    c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + FONT_FIZE*1.2);
-                }
-            }
         };
 
         // ファイルツリー情報をセット

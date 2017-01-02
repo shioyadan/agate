@@ -13,7 +13,7 @@ TreeMap.prototype.getPathFromFileNode = function(fileNode){
     if (!fileNode) {
         return null;
     }
-    
+
     // file tree からパスを生成
     let path = fileNode.key;
     fileNode = fileNode.parent;
@@ -214,9 +214,11 @@ TreeMap.prototype.createTreeMap = function(
                 r[1] > viewPort[3] || r[3] < viewPort[1]) {
                 continue;
             }
-            //if (r[2] - r[0] < 40 || r[3] - r[1] < 40){
-            //    continue;
-            //}
+            // あまりに多い & 小さい場合はカット
+            if (areas.length > 100 && (r[2] - r[0] < 4 && r[3] - r[1] < 4)){
+                continue;
+            }
+
             areas.push({
                 key: key,
                 rect: r,
