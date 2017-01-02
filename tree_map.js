@@ -3,9 +3,9 @@
 //
 
 function TreeMap(){
-    this.cachedAspectRatio = 1.0;   // (幅)/(高さ)
-    this.treeMapCache = {}; // ファイルパスから分割情報へのキャッシュ
-    this.areas = null; // 生成済み領域情報
+    this.cachedAspectRatio_ = 1.0;   // (幅)/(高さ)
+    this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
+    this.areas_ = null; // 生成済み領域情報
 }
 
 // ファイルノードからパスを得る
@@ -31,21 +31,21 @@ TreeMap.prototype.getDivTree = function(fileNode, aspectRatio){
     let self = this;
 
     // アスペクト比が大きく変わった場合，キャッシュを無効化
-    if (Math.abs(aspectRatio - self.cachedAspectRatio) > 0.1){
-        self.treeMapCache = {};
+    if (Math.abs(aspectRatio - self.cachedAspectRatio_) > 0.1){
+        self.treeMapCache_ = {};
     }
-    self.cachedAspectRatio = aspectRatio;
+    self.cachedAspectRatio_ = aspectRatio;
 
     // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
     let path = self.getPathFromFileNode(fileNode);
-    if (!(path in self.treeMapCache)){
-        self.treeMapCache[path] = {
+    if (!(path in self.treeMapCache_)){
+        self.treeMapCache_[path] = {
             rect: [0, 0, aspectRatio*1.0, 1.0],
             areas: null,
         };
     }
 
-    let cache = self.treeMapCache[path];
+    let cache = self.treeMapCache_[path];
 
     // area が未生成の場合，ここで生成
     if (!cache.areas) {
@@ -62,7 +62,7 @@ TreeMap.prototype.getDivTree = function(fileNode, aspectRatio){
         for (let key in areas) {
             let childPath = self.getPathFromFileNode(fileNode.children[key]); 
             let r = areas[key];
-            self.treeMapCache[childPath] = {
+            self.treeMapCache_[childPath] = {
                 rect: [0, 0, r[2] - r[0], r[3] - r[1]],
                 areas: null
             };
@@ -270,24 +270,24 @@ TreeMap.prototype.createTreeMap = function(
     }
 
     // 位置判定のためにとっておく
-    self.areas = wholeAreas;
+    self.areas_ = wholeAreas;
     return wholeAreas;
 };
 
 // 座標からその場所のパスを得る
 TreeMap.prototype.getFileNodeFromPoint = function(pos){
     let self = this;
-    if (!self.areas) {
+    if (!self.areas_) {
         return null;
     }
 
     // 逆順にみていく
     let fileNode = null;
-    for (let i = self.areas.length - 1; i >= 0; i--) {
-        let r = self.areas[i].rect;
+    for (let i = self.areas_.length - 1; i >= 0; i--) {
+        let r = self.areas_[i].rect;
         if (r[0] < pos[0] && pos[0] < r[2] && 
             r[1] < pos[1] && pos[1] < r[3]) {
-            fileNode = self.areas[i].fileNode;   // hit
+            fileNode = self.areas_[i].fileNode;   // hit
             break;
         }
     }

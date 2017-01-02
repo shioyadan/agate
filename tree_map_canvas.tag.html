@@ -85,9 +85,9 @@
                 self.draw();
             }
             let pointedFileNode = 
-                self.treeMapRenderer.treeMap.getFileNodeFromPoint([e.offsetX, e.offsetY]);
+                self.treeMapRenderer.getFileNodeFromPoint([e.offsetX, e.offsetY]);
             let pointedPath = 
-                self.treeMapRenderer.treeMap.getPathFromFileNode(pointedFileNode);
+                self.treeMapRenderer.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
             if (self.onPointedPathChanged) {
                 self.onPointedPathChanged(pointedPath, pointedFileNode);
@@ -123,14 +123,14 @@
 
         // ポップアップメニューの表示
         self.popupMenu = function(pos){
-            let fileNode = self.treeMapRenderer.treeMap.getFileNodeFromPoint(pos);
+            let fileNode = self.treeMapRenderer.getFileNodeFromPoint(pos);
             if (fileNode) {
                 let label = "\"" + fileNode.key + "\" を開く";
                 if (!fileNode.isDirectory) {
                     label = "\"" + fileNode.key + "\" があるフォルダを開く";
                     fileNode = fileNode.parent;
                 }
-                let path = self.treeMapRenderer.treeMap.getPathFromFileNode(fileNode);
+                let path = self.treeMapRenderer.getPathFromFileNode(fileNode);
                 let menuTemplate = [
                     {
                         label: label,
@@ -234,6 +234,7 @@
         // 外部から設定する
         self.onPointedPathChanged = null;
 
+        // ズーム
         self.zoomIn = function(){
             self.startZoom(true, self.width / 2, self.height / 2);
         };
@@ -247,6 +248,7 @@
 
         // サイズを適用
         self.on("update", function() {
+            // self.width, self.height にサイズが書き込まれているので，それを反映する
             let canvas = self.refs.canvas;
             canvas.width = self.width;
             canvas.height = self.height;

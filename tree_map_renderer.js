@@ -9,8 +9,17 @@ function TreeMapRenderer(){
     self.TILE_MERGIN = [8, 8 + this.FONT_SIZE, -8, -8];
 
     /*global TreeMap*/ 
-    self.treeMap = new TreeMap();
+    self.treeMap_ = new TreeMap();
 }
+
+TreeMapRenderer.prototype.getFileNodeFromPoint = function(pos){
+    return this.treeMap_.getFileNodeFromPoint(pos);
+};
+
+TreeMapRenderer.prototype.getPathFromFileNode = function(fileNode)
+{
+    return this.treeMap_.getPathFromFileNode(fileNode);
+};
 
 TreeMapRenderer.prototype.render = function(
     canvas, tree, virtualWidth, virtualHeight, viewPort
@@ -27,7 +36,7 @@ TreeMapRenderer.prototype.render = function(
         return;
     }
 
-    let areas = self.treeMap.createTreeMap(
+    let areas = self.treeMap_.createTreeMap(
         tree, 
         virtualWidth, 
         virtualHeight, 
