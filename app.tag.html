@@ -148,9 +148,6 @@
         self.openFolder = function(){
 
             const dialog = self.remote.dialog;
-            /* global FileInfo */
-            let fileInfo = new FileInfo();
-
             dialog.showOpenDialog(
                 null, {
                     properties: ["openDirectory"],
@@ -161,24 +158,8 @@
                     if (!folderName) {
                         return;
                     }
-                    fileInfo.getFileTree(
-                        folderName[0],  // 配列で渡される
-                        function(context, tree) {
-                            self.refs.tree_map_canvas.setTree(tree);
-                            self.statusBarMessage = 
-                                "\"" + folderName[0] + "\"から " + 
-                                context.count + " 個のファイル/フォルダを読み込みました";
-                            self.update();
-                            self.onResize();
-                        },
-                        function(context, filePath) {
-                            self.statusBarMessage = 
-                                "" + context.count + " 個のファイル/フォルダを読み込みました．" + 
-                                "現在 \"" + filePath + "\" を読み込んでいます．";
-                            self.update();
-                            self.onResize();
-                        }
-                    );
+                    /* global RiotControl*/
+                    RiotControl.trigger("tree_load", folderName[0]);
                 }
             );
         };
@@ -246,6 +227,28 @@
             // 一回開く
             self.openFolder();
         };
+
+        // 読み込み終了時
+        RiotControl.on("tree_loaded", function(store){
+            self.refs.tree_map_canvas.setTree(store.tree);
+            self.statusBarMessage = 
+                "\"" + store.treeFolderName + "\"から " + 
+                store.treeLoadState.count + " 個のファイル/フォルダを読み込みました";
+            self.update();
+            self.onResize();
+        });
+
+        // 読み込み中に定期的に呼ばれる
+        RiotControl.on("tree_loading", function(store){
+            self.statusBarMessage = 
+                "" + store.treeLoadState.count + " 個のファイル/フォルダを読み込みました．" + 
+                "現在 \"" + store.treeCurrentLoadingFileName + "\" を読み込んでいます．";
+            self.update();
+            self.onResize();
+
+        });
+
+
 
         // エントリポイント
         // マウント時に初期化を行う
