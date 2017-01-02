@@ -19,7 +19,7 @@
         self.tree = null;
 
         // ツリーマップ
-        /*global TreeMapRenderer*/ 
+        /*global TreeMapRenderer RiotControl */ 
         self.treeMapRenderer = new TreeMapRenderer();
 
         // 表示系
@@ -238,12 +238,12 @@
         self.onPointedPathChanged = null;
 
         // ズーム
-        self.zoomIn = function(){
+        RiotControl.on("canvas_zoom_in", function(){
             self.startZoom(true, self.width / 2, self.height / 2);
-        };
-        self.zoomOut = function(){
+        });
+        RiotControl.on("canvas_zoom_out", function(){
             self.startZoom(false, self.width / 2, self.height / 2);
-        };
+        });
 
         // エントリポイント
         // マウント時に初期化を行う

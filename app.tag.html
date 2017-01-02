@@ -41,8 +41,6 @@
         let self = this;
 
         self.title = "";
-        self.onZoomIn = null;
-        self.onZoomOut = null;
 
         // Close the dropdown list
         self.closeDropDown = function(){
@@ -56,11 +54,11 @@
         };
         self.onClickZoomIn = function() {
             self.closeDropDown();   // Close the list after click
-            self.onZoomIn();    // 外部から登録されたハンドラの呼び出し
+            RiotControl.trigger("canvas_zoom_in");
         };
         self.onClickZoomOut = function() {
             self.closeDropDown();   // Close the list after click
-            self.onZoomOut();    // 外部から登録されたハンドラの呼び出し
+            RiotControl.trigger("canvas_zoom_out");
         };
 
         // 高さを取得
@@ -175,11 +173,6 @@
             // リサイズハンドラの設定
             window.addEventListener("resize", self.onResize, false);
             self.onResize();    // サイズを適用しておくために1回呼んでおく
-
-            // フォルダを開くのバインド
-            self.refs.app_navbar.onOpen = self.openFolder;
-            self.refs.app_navbar.onZoomIn = self.refs.tree_map_canvas.zoomIn;
-            self.refs.app_navbar.onZoomOut = self.refs.tree_map_canvas.zoomOut;
 
             // パスが変わったときのハンドラの設定
             self.refs.tree_map_canvas.onPointedPathChanged = function(path, fileNode){
