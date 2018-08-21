@@ -1,16 +1,17 @@
 # Agate
 
-ディスクの使用状況を可視化してくれるやつ．
-![demo](https://github.com/shioyadan/agate/wiki/images/agate.gif)
-
-実行バイナリについては [こちら](https://github.com/shioyadan/agate/releases)
+* ディスクの使用状況を可視化します．
+* 実行バイナリについては [こちら](https://github.com/shioyadan/agate/releases)
 からダウンロードしてください．
+* 動作例：![demo](https://github.com/shioyadan/agate/wiki/images/agate.gif)
+
 
 ## 使い方
 
 * ホイールアップ or ダブルクリック: 拡大
 * ホイールダウン or  shift + ダブルクリック: 縮小
 * 右クリック: ポイントしたフォルダを開く
+
 
 ## 開発
 
