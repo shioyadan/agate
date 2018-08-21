@@ -1,7 +1,7 @@
 # Agate
 
 ディスクの使用状況を可視化してくれるやつ．
-![demo](https://github.com/shioyadan/Konata/wiki/images/konata.gif)
+![demo](https://github.com/shioyadan/agate/wiki/images/agate.gif)
 
 実行バイナリについては [こちら](https://github.com/shioyadan/agate/releases)
 からダウンロードしてください．
