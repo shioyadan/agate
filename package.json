@@ -1,18 +1,24 @@
 {
   "name": "agate",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Ryota Shioya",
-  "license": "ISC",
-  "devDependencies": {
-    "jQuery": "^3.1.1",
+  "repository": {
+    "url": "https://github.com/shioyadan/agate"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "riotcontrol": "^0.0.3",
+    "riot": "^3.7.4",
     "bootstrap": "^3.3.7",
-    "riot": "^3.0.4",
-    "riot-route": "^3.0.2",
-    "riotcontrol": "^0.0.3"
+    "jquery": "^3.2.1"
+  },
+  "devDependencies": {
+    "license-checker": "^15.0.0"
   }
+
 }
