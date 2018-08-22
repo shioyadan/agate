@@ -2,7 +2,7 @@
 
 * ディスクの使用状況を可視化します．
 * 実行バイナリについては [こちら](https://github.com/shioyadan/agate/releases)
-からダウンロードしてください．
+からダウンロードしてください．Windows，Linux，Mac に対応しています．
 * 動作例：
 
 ![demo](https://github.com/shioyadan/agate/wiki/images/agate.gif)
