@@ -27,7 +27,7 @@
 
     # Run and build
     make init   # Setup libraries
-    make        # Run Konata
+    make        # Run agate
     make pack   # Build & pack Konata for Windows/Linux/Mac
 
 ## その他
