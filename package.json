@@ -6,19 +6,20 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Ryota Shioya",
+  "author": "Ryota Shioya <shioya@ci.i.u-tokyo.ac.jp>",
   "repository": {
     "url": "https://github.com/shioyadan/agate"
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "riotcontrol": "^0.0.3",
-    "riot": "^3.7.4",
     "bootstrap": "^3.3.7",
-    "jquery": "^3.2.1"
+    "jquery": "^3.3.1",
+    "riot": "^3.13.2",
+    "riotcontrol": "0.0.3"
   },
   "devDependencies": {
+    "electron": "^10.1.5",
+    "electron-packager": "^15.0.0",
     "license-checker": "^15.0.0"
   }
-
 }

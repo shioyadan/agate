@@ -201,19 +201,18 @@
         RiotControl.on(ACTION.FOLDER_OPEN, function(){
             const dialog = self.remote.dialog;
             dialog.showOpenDialog(
-                null, {
+                self.remote.getCurrentWindow(), {
                     properties: ["openDirectory"],
                     title: "フォルダを選んでください",
                     defaultPath: "."
-                },
-                function(folderName){
-                    if (!folderName) {
-                        return;
-                    }
-                    /* global RiotControl ACTION */
-                    RiotControl.trigger(ACTION.TREE_LOAD, folderName[0]);
                 }
-            );
+            ).then((result) => {
+                if (!result.filePaths || result.canceled) {
+                    return;
+                }
+                /* global RiotControl ACTION */
+                RiotControl.trigger(ACTION.TREE_LOAD, result.filePaths[0]);
+            });
         });
 
         // キャンバス上でのマウスポインタの位置が変わったとき

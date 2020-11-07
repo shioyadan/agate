@@ -1,20 +1,20 @@
 run:
-	electron --debug=5858 . 
+	npx electron --debug=5858 . 
 
 init:
 	npm install
-	chmod 755 ./node_modules/license-checker/bin/license-checker
 
 # 実行バイナリを作る
 build: clean
-	./node_modules/license-checker/bin/license-checker --production --relativeLicensePath > THIRD-PARTY-LICENSES.md
-	electron-packager . agate \
+	npx license-checker --production --relativeLicensePath > THIRD-PARTY-LICENSES.md
+	npx electron-packager . konata \
 		--out=packaging-work \
 		--platform=darwin,win32,linux \
 		--arch=x64  \
-		--electron-version=1.7.5 \
+		--electron-version=10.1.5 \
 		--ignore work \
 		--ignore packaging-work \
+		--ignore .vscode \
 		--prune=true	# Exclude devDependencies
 
 # アーカイブに固める

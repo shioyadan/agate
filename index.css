@@ -3,4 +3,5 @@ html, body {
   height: 100%;
   margin: 0;        /* すきまなく */
   overflow: hidden; /* はみ出た部分は表示されない */
+  background-color: "rgb(200,200,200)";
 }
