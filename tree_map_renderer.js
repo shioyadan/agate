@@ -6,7 +6,7 @@ function TreeMapRenderer(){
 
     // 各タイルの中の子タイルへのマージン
     // rect の各方向に足される
-    self.TILE_MERGIN = [8, 8 + this.FONT_SIZE, -8, -8];
+    self.TILE_MARGIN = [8, 8 + this.FONT_SIZE, -8, -8];
 
     /*global TreeMap*/ 
     self.treeMap_ = new TreeMap();
@@ -44,7 +44,7 @@ TreeMapRenderer.prototype.render = function(
         virtualWidth, 
         virtualHeight, 
         viewPort,
-        self.TILE_MERGIN
+        self.TILE_MARGIN
     );
 
     let fillStyle = [];
@@ -119,7 +119,7 @@ TreeMapRenderer.prototype.render = function(
             c.strokeStyle = strokeStyle[a.level];
             prevLevel = a.level;
         }
-        let pos = [Math.max(0, rect[0]) + self.TILE_MERGIN[0]/2, rect[1] + self.FONT_SIZE];
+        let pos = [Math.max(0, rect[0]) + self.TILE_MARGIN[0]/2, rect[1] + self.FONT_SIZE];
 
         if (!a.fileNode.children) {
             // ファイル
@@ -137,7 +137,7 @@ TreeMapRenderer.prototype.render = function(
     c.fillStyle = "rgb(255,255,255)";
     for (let a of strAreas) {
         let rect = a.rect;
-        let pos = [Math.max(0, rect[0]) + self.TILE_MERGIN[0]/2, rect[1] + self.FONT_SIZE];
+        let pos = [Math.max(0, rect[0]) + self.TILE_MARGIN[0]/2, rect[1] + self.FONT_SIZE];
         if (!a.fileNode.children) {
             // ファイル
             pos[0] += 10;

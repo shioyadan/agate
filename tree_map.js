@@ -190,7 +190,7 @@ TreeMap.prototype.divideRects = function(divNode, divided, rect) {
 
 // 描画領域の作成
 TreeMap.prototype.createTreeMap = function(
-    fileNode, virtWidth, virtHeight, viewPort, mergin
+    fileNode, virtWidth, virtHeight, viewPort, margin
 ) {
     let self = this;
 
@@ -239,10 +239,10 @@ TreeMap.prototype.createTreeMap = function(
         for (let a of curAreas) {
             if (a.fileNode.children) {
                 let r = [
-                    a.rect[0] + mergin[0],
-                    a.rect[1] + mergin[1],
-                    a.rect[2] + mergin[2],
-                    a.rect[3] + mergin[3],
+                    a.rect[0] + margin[0],
+                    a.rect[1] + margin[1],
+                    a.rect[2] + margin[2],
+                    a.rect[3] + margin[3],
                 ];
 
                 // 一定以上の大きさなら探索
