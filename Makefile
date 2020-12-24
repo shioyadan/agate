@@ -7,7 +7,7 @@ init:
 # 実行バイナリを作る
 build: clean
 	npx license-checker --production --relativeLicensePath > THIRD-PARTY-LICENSES.md
-	npx electron-packager . konata \
+	npx electron-packager . agate \
 		--out=packaging-work \
 		--platform=darwin,win32,linux \
 		--arch=x64  \

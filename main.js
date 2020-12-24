@@ -26,6 +26,10 @@ app.on("ready", function() {
     mainWindow = new BrowserWindow({
         width: 800, 
         height: 600,
+
+        // The window is initially hidden and 
+        // is activate in an initial handler in <app> in app.tag.html
+        //show: false,
         
         webPreferences: {
             nodeIntegration: true,
