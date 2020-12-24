@@ -129,9 +129,9 @@
         self.popupMenu = function(pos){
             let fileNode = self.treeMapRenderer.getFileNodeFromPoint(pos);
             if (fileNode) {
-                let label = "\"" + fileNode.key + "\" を開く";
+                let label = "Open " + "\"" + fileNode.key + "\"";
                 if (!fileNode.isDirectory) {
-                    label = "\"" + fileNode.key + "\" があるフォルダを開く";
+                    label = "Open a folder including " + "\"" + fileNode.key + "\"";
                     fileNode = fileNode.parent;
                 }
                 let path = self.treeMapRenderer.getPathFromFileNode(fileNode);

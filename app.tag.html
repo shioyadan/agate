@@ -21,15 +21,15 @@
                 <ul class="nav navbar-nav navbar-left">
                     <li><a href="#home" onclick={onClickOpen}>
                         <span class="glyphicon glyphicon-folder-open"></span> 
-                        フォルダを開く
+                        Open a folder
                     </a></li>
                     <li><a href="#home" onclick={onClickZoomIn}>
                         <span class="glyphicon glyphicon-zoom-in"></span> 
-                        拡大
+                        Zoom in
                     </a></li>
                     <li><a href="#home" onclick={onClickZoomOut}>
                         <span class="glyphicon glyphicon-zoom-out"></span> 
-                        縮小
+                        Zoom out
                     </a></li>
                 </ul>
             </div>
@@ -102,28 +102,28 @@
         // メニュー
         let menuTemplate = [
             {
-                label: "ファイル",
+                label: "File",
                 submenu: [{
-                    label: "フォルダを開く",
+                    label: "Open a folder",
                     click: function(){RiotControl.trigger(ACTION.FOLDER_OPEN);}
                 }]
             },
             {
-                label: "ヘルプ",
+                label: "Help",
                 submenu: [
                     {
-                        label: "開発者ツールの切り替え",
+                        label: "Open a developer tool",
                         click: function(){self.toggleDevTools();}
                     },
                     {
-                        label: "バージョン情報",
+                        label: "Version information",
                         click: function(){self.modalDialog("agate 0.2.0, Ryota Shioya");}
                     }
                 ]
             }
         ];
 
-        self.statusBarMessage = "フォルダを開いてください";    // 
+        self.statusBarMessage = "Please open a folder.";    // 
         self.remote = require("electron").remote;
 
         // ダイアログを表示
@@ -182,8 +182,8 @@
         // 読み込み終了時
         RiotControl.on(ACTION.TREE_LOADED, function(store){
             self.statusBarMessage = 
-                "\"" + store.treeFolderName + "\"から " + 
-                store.treeLoadState.count + " 個のファイル/フォルダを読み込みました";
+                store.treeLoadState.count + " files were read" + 
+                "from" + "\"" + store.treeFolderName + "\".";
             self.update();
             self.onResize();
         });
@@ -191,8 +191,8 @@
         // 読み込み中に定期的に呼ばれる
         RiotControl.on(ACTION.TREE_LOADING, function(store){
             self.statusBarMessage = 
-                "" + store.treeLoadState.count + " 個のファイル/フォルダを読み込みました．" + 
-                "現在 \"" + store.treeCurrentLoadingFileName + "\" を読み込んでいます．";
+                "" + store.treeLoadState.count + " files have been read." + 
+                "Currently, reading \"" + store.treeCurrentLoadingFileName + "\".";
             self.update();
             self.onResize();
         });
@@ -203,7 +203,7 @@
             dialog.showOpenDialog(
                 self.remote.getCurrentWindow(), {
                     properties: ["openDirectory"],
-                    title: "フォルダを選んでください",
+                    title: "Please specify a folder.",
                     defaultPath: "."
                 }
             ).then((result) => {
