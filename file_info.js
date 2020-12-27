@@ -19,7 +19,7 @@ class FileInfo{
 
     // path により指定したフォルダ以下のファイルツリーを取得
     // render プロセスで実行
-    getFileTree(path, finishCallback, pogressCallback) {
+    getFileTree(path, finishCallback, progressCallback) {
         let self = this;
         // main プロセスで getFileListBody を呼び出す
         //let remote = require("electron").remote.require("./file_info");
@@ -38,18 +38,18 @@ class FileInfo{
                 // 呼び出し元に返す
                 finishCallback(context, tree);
             },
-            pogressCallback
+            progressCallback
         );
     };
 
     // getFileTree の実装のエントリポイント
     // main プロセスで実行
-    getFileTreeOnMain(path, finishCallback, pogressCallback) {
+    getFileTreeOnMain(path, finishCallback, progressCallback) {
         let self = this;
         let context = {
             count: 0,
             finishCallback: finishCallback,
-            pogressCallback: pogressCallback,
+            progressCallback: progressCallback,
             searching: 0,
             searchingDir: 1,
             tree: {
@@ -138,7 +138,7 @@ class FileInfo{
                     context.searching -= 1;
 
                     if (context.count % (1024*4) == 0) {
-                        context.pogressCallback(context, filePath);
+                        context.progressCallback(context, filePath);
                     }
 
                     if (context.searching == 0 && context.searchingDir == 0){
