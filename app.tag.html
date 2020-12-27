@@ -179,7 +179,7 @@
         };
 
         // 読み込み終了時
-        store.on(store.ACTION.TREE_LOADED, function(store){
+        store.on(store.CHANGE.TREE_LOADED, function(store){
             self.statusBarMessage = 
                 store.treeLoadState.count + " files were read " + 
                 "from " + "\"" + store.treeFolderName + "\".";
@@ -188,7 +188,7 @@
         });
 
         // 読み込み中に定期的に呼ばれる
-        store.on(store.ACTION.TREE_LOADING, function(store){
+        store.on(store.CHANGE.TREE_LOADING, function(store){
             self.statusBarMessage = 
                 "" + store.treeLoadState.count + " files have been read." + 
                 "Currently, reading \"" + store.treeCurrentLoadingFileName + "\".";
@@ -197,7 +197,7 @@
         });
 
         // 読み込みダイアログ
-        store.on(store.ACTION.FOLDER_OPEN, function(){
+        store.on(store.CHANGE.FOLDER_OPEN, function(){
             const dialog = self.remote.dialog;
             dialog.showOpenDialog(
                 self.remote.getCurrentWindow(), {
@@ -214,7 +214,7 @@
         });
 
         // キャンバス上でのマウスポインタの位置が変わったとき
-        store.on(store.ACTION.CANVAS_POINTER_CHANGED, function(store){
+        store.on(store.CHANGE.CANVAS_POINTER_CHANGED, function(store){
             let path = store.pointedPath;
             let fileNode = store.pointedFileNode;
             if (!path) {

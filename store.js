@@ -1,18 +1,21 @@
 const {FileInfo} = require("./file_info.js");
 
 const ACTION = {
-    TREE_LOAD: 0,
-    TREE_LOADED: 1,
-    TREE_LOADING: 2,
+    TREE_LOAD: 1,
+    FOLDER_OPEN: 2,
     CANVAS_RESIZED: 3,
     CANVAS_POINTER_CHANGE: 4,
-    CANVAS_POINTER_CHANGED: 5,
     CANVAS_ZOOM_IN: 6,
     CANVAS_ZOOM_OUT: 7,
-    FOLDER_OPEN: 8,
 };
 
 const CHANGE = {
+    TREE_LOADED: 100,
+    TREE_LOADING: 101,
+    FOLDER_OPEN: 102,
+    CANVAS_ZOOM_IN: 103,
+    CANVAS_ZOOM_OUT: 104,
+    CANVAS_POINTER_CHANGED: 105,
 };
 
 
@@ -42,13 +45,13 @@ class Store {
                     // 読み込み終了
                     this.tree = tree;
                     this.treeLoadState = state;
-                    this.trigger(ACTION.TREE_LOADED, this);       
+                    this.trigger(CHANGE.TREE_LOADED, this);       
                 },
                 (state, filePath)  => {
                     // 読み込み状態の更新
                     this.treeLoadState = state;
                     this.treeCurrentLoadingFileName = filePath;
-                    this.trigger(ACTION.TREE_LOADING, this);       
+                    this.trigger(CHANGE.TREE_LOADING, this);       
                 }
             );
         });
@@ -61,9 +64,12 @@ class Store {
         this.on(ACTION.CANVAS_POINTER_CHANGE, (path, fileNode) => {
             this.pointedPath = path;
             this.pointedFileNode = fileNode;
-            this.trigger(ACTION.CANVAS_POINTER_CHANGED, this);       
+            this.trigger(CHANGE.CANVAS_POINTER_CHANGED, this);       
         });
 
+        this.on(ACTION.FOLDER_OPEN, () => {this.trigger(CHANGE.FOLDER_OPEN);});
+        this.on(ACTION.CANVAS_ZOOM_IN, () => {this.trigger(CHANGE.CANVAS_ZOOM_IN);});
+        this.on(ACTION.CANVAS_ZOOM_OUT, () => {this.trigger(CHANGE.CANVAS_ZOOM_OUT);});
     }
 
     on(event, handler) {

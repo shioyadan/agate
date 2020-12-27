@@ -230,16 +230,16 @@
         };
 
         // ファイルツリー情報をセット
-        store.on(store.ACTION.TREE_LOADED, function(store){
+        store.on(store.CHANGE.TREE_LOADED, function(store){
             self.tree = store.tree;
             self.draw();
         });
 
         // ズーム
-        store.on(store.ACTION.CANVAS_ZOOM_IN, function(){
+        store.on(store.CHANGE.CANVAS_ZOOM_IN, function(){
             self.startZoom(true, self.width / 2, self.height / 2);
         });
-        store.on(store.ACTION.CANVAS_ZOOM_OUT, function(){
+        store.on(store.CHANGE.CANVAS_ZOOM_OUT, function(){
             self.startZoom(false, self.width / 2, self.height / 2);
         });
 
