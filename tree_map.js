@@ -2,314 +2,316 @@
 // baseAspectX/baseAspectY: 生成するツリーマップ絶対のアスペクト比
 //
 
-function TreeMap(){
-    this.cachedAspectRatio_ = 1.0;   // (幅)/(高さ)
-    this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
-    this.areas_ = null; // 生成済み領域情報
-}
-
-// ファイルノードからパスを得る
-TreeMap.prototype.getPathFromFileNode = function(fileNode){
-    if (!fileNode) {
-        return null;
+class TreeMap {
+    constructor() {
+        this.cachedAspectRatio_ = 1.0;   // (幅)/(高さ)
+        this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
+        this.areas_ = null; // 生成済み領域情報
     }
 
-    // file tree からパスを生成
-    let path = fileNode.key;
-    fileNode = fileNode.parent;
-    while (fileNode) {
-        path = fileNode.key + "/" + path;
+    // ファイルノードからパスを得る
+    getPathFromFileNode(fileNode){
+        if (!fileNode) {
+            return null;
+        }
+
+        // file tree からパスを生成
+        let path = fileNode.key;
         fileNode = fileNode.parent;
-    }
-    return path;
-};
+        while (fileNode) {
+            path = fileNode.key + "/" + path;
+            fileNode = fileNode.parent;
+        }
+        return path;
+    };
 
 
-// キャッシュされたバイナリツリーを得る
-// キャッシュは fileTree 内部に直に保持される
-TreeMap.prototype.getDivTree = function(fileNode, aspectRatio){
-    let self = this;
+    // キャッシュされたバイナリツリーを得る
+    // キャッシュは fileTree 内部に直に保持される
+    getDivTree(fileNode, aspectRatio){
+        let self = this;
 
-    // アスペクト比が大きく変わった場合，キャッシュを無効化
-    if (Math.abs(aspectRatio - self.cachedAspectRatio_) > 0.1){
-        self.treeMapCache_ = {};
-    }
-    self.cachedAspectRatio_ = aspectRatio;
+        // アスペクト比が大きく変わった場合，キャッシュを無効化
+        if (Math.abs(aspectRatio - self.cachedAspectRatio_) > 0.1){
+            self.treeMapCache_ = {};
+        }
+        self.cachedAspectRatio_ = aspectRatio;
 
-    // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
-    let path = self.getPathFromFileNode(fileNode);
-    if (!(path in self.treeMapCache_)){
-        self.treeMapCache_[path] = {
-            rect: [0, 0, aspectRatio*1.0, 1.0],
-            areas: null,
-        };
-    }
-
-    let cache = self.treeMapCache_[path];
-
-    // area が未生成の場合，ここで生成
-    if (!cache.areas) {
-
-        // 分割木を生成
-        let divTree = self.makeDivTree(fileNode);
-
-        // 分割木を元に分割領域を生成
-        let areas = {};
-        let baseRect = cache.rect;
-        self.divideRects(divTree, areas, baseRect);
-
-        // 子階層に縦横比を伝える
-        for (let key in areas) {
-            let childPath = self.getPathFromFileNode(fileNode.children[key]); 
-            let r = areas[key];
-            self.treeMapCache_[childPath] = {
-                rect: [0, 0, r[2] - r[0], r[3] - r[1]],
-                areas: null
+        // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
+        let path = self.getPathFromFileNode(fileNode);
+        if (!(path in self.treeMapCache_)){
+            self.treeMapCache_[path] = {
+                rect: [0, 0, aspectRatio*1.0, 1.0],
+                areas: null,
             };
         }
 
-        // 縦横それぞれ0 から 1.0 に正規化して保存
-        for (let key in areas) {
-            let r = areas[key];
-            r[0] /= baseRect[2] - baseRect[0];
-            r[1] /= baseRect[3] - baseRect[1];
-            r[2] /= baseRect[2] - baseRect[0];
-            r[3] /= baseRect[3] - baseRect[1];
-        }
-        cache.areas = areas;
-    }
-    return cache;
-};
+        let cache = self.treeMapCache_[path];
 
-// tree から分割木を作る
-// この分割木はバイナリツリーであり，フォルダの中のファイルの分割方法を表す．
-// このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
-// がなるべくバランスするようにしてある．これによってタイルのアスペクト比
-// が小さくなる･･･ と思う
-TreeMap.prototype.makeDivTree = function(fileNode) {
-    let fileChildren = fileNode.children;
-    let keys = Object.keys(fileChildren);
+        // area が未生成の場合，ここで生成
+        if (!cache.areas) {
 
-    // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
-    keys = keys.filter(function(key) {
-        return !(fileChildren[key].size < 1);
-    });
+            // 分割木を生成
+            let divTree = self.makeDivTree(fileNode);
 
-    // tree 直下のファイル/ディレクトリのサイズでソート
-    keys.sort(function(a, b) {
-        let sizeA = fileChildren[a].size;
-        let sizeB = fileChildren[b].size;
-        if (sizeA > sizeB) return -1;
-        if (sizeA < sizeB) return 1;
-        return 0;
-    });
+            // 分割木を元に分割領域を生成
+            let areas = {};
+            let baseRect = cache.rect;
+            self.divideRects(divTree, areas, baseRect);
 
-    // 再帰的にツリーを作成
-    // 渡された node の中身を書き換える必要があるので注意
-    function makeDivNode(divNode, fileNames, fileChildren) {
-
-        // 末端
-        if (fileNames.length <= 1) {
-            divNode.size = fileChildren[fileNames[0]].size;
-            divNode.key = fileNames[0];
-            divNode.children = null;
-            divNode.fileNode = fileChildren[fileNames[0]];
-            return;
-        }
-
-        let left = [];
-        let right = [];
-        let leftSize = 0;
-        let rightSize = 0;
-
-        // ファイルネームは大きいものから降順にソートされてる
-        for (let fileName of fileNames) {
-            // 左右のうち，現在小さい方に加えることでバランスさせる
-            if (leftSize < rightSize) {
-                left.push(fileName);
-                leftSize += fileChildren[fileName].size;
-            }
-            else{
-                right.push(fileName);
-                rightSize += fileChildren[fileName].size;
-            }
-        }
-
-        divNode.size = leftSize + rightSize;
-        divNode.children = [{},{}];
-        divNode.key = "";
-        divNode.fileNode = null;
-
-        makeDivNode(divNode.children[0], left, fileChildren);
-        makeDivNode(divNode.children[1], right, fileChildren);
-    }
-
-    let divTree = {};
-    makeDivNode(divTree, keys, fileChildren);
-    return divTree;
-};
-
-
-// 分割木から矩形のリストを再帰的に作成する
-// divNode: バイナリツリーのノード
-// divided: 分割結果の矩形のハッシュ（ファイル名 -> 矩形）
-// rect: 分割対象の矩形．これを divNode に従い再帰的に分割
-TreeMap.prototype.divideRects = function(divNode, divided, rect) {
-    let self = this;
-
-    if (!divNode.children) {
-        divided[divNode.key] = rect;
-        return;
-    }
-    
-    let left = rect[0];
-    let top = rect[1];
-    let right = rect[2];
-    let bottom = rect[3];
-    let width = right - left;
-    let height = bottom - top;
-    let ratio = 
-        1.0 * 
-        divNode.children[0].size / 
-        (divNode.children[0].size + divNode.children[1].size);
-
-    // 長い辺の方を分割
-    let result = 
-        (width * 1.02 > height) ?   // ラベルを考慮して少しだけ縦長に
-        [
-            [left, top, left + width*ratio, bottom],
-            [left + width*ratio, top, right, bottom],
-        ] :
-        [
-            [left, top, right, top + height*ratio],
-            [left, top + height*ratio, right, bottom],
-        ];
-    self.divideRects(divNode.children[0], divided, result[0]);
-    self.divideRects(divNode.children[1], divided, result[1]);
-};
-
-// 描画領域の作成
-TreeMap.prototype.createTreeMap = function(
-    fileNode, virtWidth, virtHeight, viewPort, margin
-) {
-    let self = this;
-
-    function traverse(fileNode, areas, virtRect, level) {
-        let cache = self.getDivTree(fileNode, virtWidth/virtHeight);
-        let width = virtRect[2] - virtRect[0];
-        let height = virtRect[3] - virtRect[1];
-
-        for (let key in cache.areas) {
-            let ar = cache.areas[key];
-
-            let r = [
-                virtRect[0] + ar[0] * width, 
-                virtRect[1] + ar[1] * height, 
-                virtRect[0] + ar[2] * width, 
-                virtRect[1] + ar[3] * height
-            ];
-
-            // 範囲外なら，これ以上は探索しない
-            if (r[0] > viewPort[2] || r[2] < viewPort[0] || 
-                r[1] > viewPort[3] || r[3] < viewPort[1]) {
-                continue;
-            }
-            // あまりに多い & 小さい場合はカット
-            if (areas.length > 100 && (r[2] - r[0] < 4 && r[3] - r[1] < 4)){
-                continue;
+            // 子階層に縦横比を伝える
+            for (let key in areas) {
+                let childPath = self.getPathFromFileNode(fileNode.children[key]); 
+                let r = areas[key];
+                self.treeMapCache_[childPath] = {
+                    rect: [0, 0, r[2] - r[0], r[3] - r[1]],
+                    areas: null
+                };
             }
 
-            areas.push({
-                key: key,
-                rect: r,
-                level: level,
-                fileNode: fileNode.children[key]
-            });
+            // 縦横それぞれ0 から 1.0 に正規化して保存
+            for (let key in areas) {
+                let r = areas[key];
+                r[0] /= baseRect[2] - baseRect[0];
+                r[1] /= baseRect[3] - baseRect[1];
+                r[2] /= baseRect[2] - baseRect[0];
+                r[3] /= baseRect[3] - baseRect[1];
+            }
+            cache.areas = areas;
         }
+        return cache;
+    };
 
-    }
+    // tree から分割木を作る
+    // この分割木はバイナリツリーであり，フォルダの中のファイルの分割方法を表す．
+    // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
+    // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
+    // が小さくなる･･･ と思う
+    makeDivTree(fileNode) {
+        let fileChildren = fileNode.children;
+        let keys = Object.keys(fileChildren);
 
-    let wholeAreas = [];
-    let curAreas = [];
-    traverse(fileNode, curAreas, [0, 0, virtWidth, virtHeight], 0);
-    wholeAreas = wholeAreas.concat(curAreas);
+        // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
+        keys = keys.filter((key) => {
+            return !(fileChildren[key].size < 1);
+        });
 
-    for (let level = 1; level < 100; level++) {
-        let nextAreas = [];
-        for (let a of curAreas) {
-            if (a.fileNode.children) {
-                let r = [
-                    a.rect[0] + margin[0],
-                    a.rect[1] + margin[1],
-                    a.rect[2] + margin[2],
-                    a.rect[3] + margin[3],
-                ];
+        // tree 直下のファイル/ディレクトリのサイズでソート
+        keys.sort((a, b) => {
+            let sizeA = fileChildren[a].size;
+            let sizeB = fileChildren[b].size;
+            if (sizeA > sizeB) return -1;
+            if (sizeA < sizeB) return 1;
+            return 0;
+        });
 
-                // 一定以上の大きさなら探索
-                if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
-                    traverse(a.fileNode, nextAreas, r, level);
+        // 再帰的にツリーを作成
+        // 渡された node の中身を書き換える必要があるので注意
+        function makeDivNode(divNode, fileNames, fileChildren) {
+
+            // 末端
+            if (fileNames.length <= 1) {
+                divNode.size = fileChildren[fileNames[0]].size;
+                divNode.key = fileNames[0];
+                divNode.children = null;
+                divNode.fileNode = fileChildren[fileNames[0]];
+                return;
+            }
+
+            let left = [];
+            let right = [];
+            let leftSize = 0;
+            let rightSize = 0;
+
+            // ファイルネームは大きいものから降順にソートされてる
+            for (let fileName of fileNames) {
+                // 左右のうち，現在小さい方に加えることでバランスさせる
+                if (leftSize < rightSize) {
+                    left.push(fileName);
+                    leftSize += fileChildren[fileName].size;
+                }
+                else{
+                    right.push(fileName);
+                    rightSize += fileChildren[fileName].size;
                 }
             }
-        }
-        curAreas = nextAreas;
 
-        // 新規追加エリアがないので抜ける
-        if (nextAreas.length == 0) {
-            break;
+            divNode.size = leftSize + rightSize;
+            divNode.children = [{},{}];
+            divNode.key = "";
+            divNode.fileNode = null;
+
+            makeDivNode(divNode.children[0], left, fileChildren);
+            makeDivNode(divNode.children[1], right, fileChildren);
         }
 
+        let divTree = {};
+        makeDivNode(divTree, keys, fileChildren);
+        return divTree;
+    };
+
+
+    // 分割木から矩形のリストを再帰的に作成する
+    // divNode: バイナリツリーのノード
+    // divided: 分割結果の矩形のハッシュ（ファイル名 -> 矩形）
+    // rect: 分割対象の矩形．これを divNode に従い再帰的に分割
+    divideRects(divNode, divided, rect) {
+        let self = this;
+
+        if (!divNode.children) {
+            divided[divNode.key] = rect;
+            return;
+        }
+        
+        let left = rect[0];
+        let top = rect[1];
+        let right = rect[2];
+        let bottom = rect[3];
+        let width = right - left;
+        let height = bottom - top;
+        let ratio = 
+            1.0 * 
+            divNode.children[0].size / 
+            (divNode.children[0].size + divNode.children[1].size);
+
+        // 長い辺の方を分割
+        let result = 
+            (width * 1.02 > height) ?   // ラベルを考慮して少しだけ縦長に
+            [
+                [left, top, left + width*ratio, bottom],
+                [left + width*ratio, top, right, bottom],
+            ] :
+            [
+                [left, top, right, top + height*ratio],
+                [left, top + height*ratio, right, bottom],
+            ];
+        self.divideRects(divNode.children[0], divided, result[0]);
+        self.divideRects(divNode.children[1], divided, result[1]);
+    };
+
+    // 描画領域の作成
+    createTreeMap(
+        fileNode, virtWidth, virtHeight, viewPort, margin
+    ) {
+        let self = this;
+
+        function traverse(fileNode, areas, virtRect, level) {
+            let cache = self.getDivTree(fileNode, virtWidth/virtHeight);
+            let width = virtRect[2] - virtRect[0];
+            let height = virtRect[3] - virtRect[1];
+
+            for (let key in cache.areas) {
+                let ar = cache.areas[key];
+
+                let r = [
+                    virtRect[0] + ar[0] * width, 
+                    virtRect[1] + ar[1] * height, 
+                    virtRect[0] + ar[2] * width, 
+                    virtRect[1] + ar[3] * height
+                ];
+
+                // 範囲外なら，これ以上は探索しない
+                if (r[0] > viewPort[2] || r[2] < viewPort[0] || 
+                    r[1] > viewPort[3] || r[3] < viewPort[1]) {
+                    continue;
+                }
+                // あまりに多い & 小さい場合はカット
+                if (areas.length > 100 && (r[2] - r[0] < 4 && r[3] - r[1] < 4)){
+                    continue;
+                }
+
+                areas.push({
+                    key: key,
+                    rect: r,
+                    level: level,
+                    fileNode: fileNode.children[key]
+                });
+            }
+
+        }
+
+        let wholeAreas = [];
+        let curAreas = [];
+        traverse(fileNode, curAreas, [0, 0, virtWidth, virtHeight], 0);
         wholeAreas = wholeAreas.concat(curAreas);
-    }
 
-    // ビューポートの場所に更新
-    for (let a of wholeAreas) {
-        a.rect[0] -= viewPort[0];
-        a.rect[1] -= viewPort[1];
-        a.rect[2] -= viewPort[0];
-        a.rect[3] -= viewPort[1];
-    }
+        for (let level = 1; level < 100; level++) {
+            let nextAreas = [];
+            for (let a of curAreas) {
+                if (a.fileNode.children) {
+                    let r = [
+                        a.rect[0] + margin[0],
+                        a.rect[1] + margin[1],
+                        a.rect[2] + margin[2],
+                        a.rect[3] + margin[3],
+                    ];
 
-    // 位置判定のためにとっておく
-    self.areas_ = wholeAreas;
-    return wholeAreas;
-};
+                    // 一定以上の大きさなら探索
+                    if (r[2] - r[0] > 40 && r[3] - r[1] > 40){
+                        traverse(a.fileNode, nextAreas, r, level);
+                    }
+                }
+            }
+            curAreas = nextAreas;
 
-// 座標からその場所のパスを得る
-TreeMap.prototype.getFileNodeFromPoint = function(pos){
-    let self = this;
-    if (!self.areas_) {
-        return null;
-    }
+            // 新規追加エリアがないので抜ける
+            if (nextAreas.length == 0) {
+                break;
+            }
 
-    // 逆順にみていく
-    let fileNode = null;
-    for (let i = self.areas_.length - 1; i >= 0; i--) {
-        let r = self.areas_[i].rect;
-        if (r[0] < pos[0] && pos[0] < r[2] && 
-            r[1] < pos[1] && pos[1] < r[3]) {
-            fileNode = self.areas_[i].fileNode;   // hit
-            break;
+            wholeAreas = wholeAreas.concat(curAreas);
         }
+
+        // ビューポートの場所に更新
+        for (let a of wholeAreas) {
+            a.rect[0] -= viewPort[0];
+            a.rect[1] -= viewPort[1];
+            a.rect[2] -= viewPort[0];
+            a.rect[3] -= viewPort[1];
+        }
+
+        // 位置判定のためにとっておく
+        self.areas_ = wholeAreas;
+        return wholeAreas;
+    };
+
+    // 座標からその場所のパスを得る
+    getFileNodeFromPoint(pos){
+        let self = this;
+        if (!self.areas_) {
+            return null;
+        }
+
+        // 逆順にみていく
+        let fileNode = null;
+        for (let i = self.areas_.length - 1; i >= 0; i--) {
+            let r = self.areas_[i].rect;
+            if (r[0] < pos[0] && pos[0] < r[2] && 
+                r[1] < pos[1] && pos[1] < r[3]) {
+                fileNode = self.areas_[i].fileNode;   // hit
+                break;
+            }
+        }
+
+        return fileNode;
+    };
+
+    // 座標からその場所のパスを得る
+    getPathFromPoint(pos){
+        let self = this;
+        let fileNode = self.getFileNodeFromPoint(pos);
+
+        // ポイントされている位置にみつからなかった
+        if (!fileNode) {
+            return null;
+        }
+
+        // file tree からパスを生成
+        return self.getPathFromFileNode(fileNode);
     }
-
-    return fileNode;
-};
-
-// 座標からその場所のパスを得る
-TreeMap.prototype.getPathFromPoint = function(pos){
-    let self = this;
-    let fileNode = self.getFileNodeFromPoint(pos);
-
-    // ポイントされている位置にみつからなかった
-    if (!fileNode) {
-        return null;
-    }
-
-    // file tree からパスを生成
-    return self.getPathFromFileNode(fileNode);
-},
+}
 
 
 
 
-module.exports = TreeMap;
+module.exports.TreeMap = TreeMap;
