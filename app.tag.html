@@ -182,8 +182,8 @@
         // 読み込み終了時
         RiotControl.on(ACTION.TREE_LOADED, function(store){
             self.statusBarMessage = 
-                store.treeLoadState.count + " files were read" + 
-                "from" + "\"" + store.treeFolderName + "\".";
+                store.treeLoadState.count + " files were read " + 
+                "from " + "\"" + store.treeFolderName + "\".";
             self.update();
             self.onResize();
         });
