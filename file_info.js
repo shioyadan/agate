@@ -1,156 +1,158 @@
-function FileInfo(){
-    return this;
-}
+class FileInfo{
+    constructor() {
 
-// tree で渡されてくるツリーにおいて，
-// 各ディレクトリが含む合計サイズを計算して適用する
-FileInfo.prototype.updateDirectorySize = function(tree){
-    let size = 0;
-    for(let key in tree.children) {
-        let val = tree.children[key];
-        if (val.isDirectory && val.children) {
-            val.size = this.updateDirectorySize(val);
-        }
-        size += val.size;
     }
-    return size;
-};
 
-// path により指定したフォルダ以下のファイルツリーを取得
-// render プロセスで実行
-FileInfo.prototype.getFileTree = function(path, finishCallback, pogressCallback){
-    let self = this;
-    // main プロセスで getFileListBody を呼び出す
-    //let remote = require("electron").remote.require("./file_info");
-    //remote.getFileTreeOnMain(path, function(context, treeJSON) {
-
-    self.getFileTreeOnMain(
-        path, 
-        function(context, treeJSON){
-            // JSON にシリアライズされて送られてくるので，展開する
-            //tree = JSON.parse(treeJSON);
-            let tree = treeJSON;
-
-            // 各ディレクトリのサイズ反映
-            self.updateDirectorySize(tree);
-
-            // 呼び出し元に返す
-            finishCallback(context, tree);
-        },
-        pogressCallback
-    );
-};
-
-// getFileTree の実装のエントリポイント
-// main プロセスで実行
-FileInfo.prototype.getFileTreeOnMain = function(path, finishCallback, pogressCallback){
-    let self = this;
-    let context = {
-        count: 0,
-        finishCallback: finishCallback,
-        pogressCallback: pogressCallback,
-        searching: 0,
-        searchingDir: 1,
-        tree: {
-            children: {},
-            parent: null,
-            key: path,
-            size: 0,
-            isDirectory: false,
-        },
-        callCount: 0,
+    // tree で渡されてくるツリーにおいて，
+    // 各ディレクトリが含む合計サイズを計算して適用する
+    updateDirectorySize(tree) {
+        let size = 0;
+        for(let key in tree.children) {
+            let val = tree.children[key];
+            if (val.isDirectory && val.children) {
+                val.size = this.updateDirectorySize(val);
+            }
+            size += val.size;
+        }
+        return size;
     };
 
-    self.getFileTreeOnMainBody(path, context, context.tree);
-},
-    
-// getFileTree の実装
-// main プロセスで実行
-FileInfo.prototype.getFileTreeOnMainBody = function(path, context, parent){
-    let self = this;
-    context.callCount += 1;
-    /*
-    if (context.callCount % (1024) == 0) {
-        console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
-    }
-    */
-    /*
-    if (context.callCount > 16) {
-        if  (context.searching == 0) {
-            context.callCount = 0;
-        }
-        else{
-            setTimeout(
-                function() {
-                    fileInfo.getFileTreeOnMainBody(path, context, parent);
-                },
-                100
-            );
-            return;
-        }
-    }*/
+    // path により指定したフォルダ以下のファイルツリーを取得
+    // render プロセスで実行
+    getFileTree(path, finishCallback, pogressCallback) {
+        let self = this;
+        // main プロセスで getFileListBody を呼び出す
+        //let remote = require("electron").remote.require("./file_info");
+        //remote.getFileTreeOnMain(path, function(context, treeJSON) {
 
-    //let fs = require("electron").remote.require("fs");
-    let fs = require("fs");
+        self.getFileTreeOnMain(
+            path, 
+            function(context, treeJSON){
+                // JSON にシリアライズされて送られてくるので，展開する
+                //tree = JSON.parse(treeJSON);
+                let tree = treeJSON;
 
-    fs.readdir(path, function(err, files){
-        // エラーでも探索対象に入っているので
-        // 探索済みにカウントする必要がある
-        context.searchingDir -= 1;
+                // 各ディレクトリのサイズ反映
+                self.updateDirectorySize(tree);
 
-        if (err) {
-            //console.log(err);
-            return;
-        }
+                // 呼び出し元に返す
+                finishCallback(context, tree);
+            },
+            pogressCallback
+        );
+    };
+
+    // getFileTree の実装のエントリポイント
+    // main プロセスで実行
+    getFileTreeOnMain(path, finishCallback, pogressCallback) {
+        let self = this;
+        let context = {
+            count: 0,
+            finishCallback: finishCallback,
+            pogressCallback: pogressCallback,
+            searching: 0,
+            searchingDir: 1,
+            tree: {
+                children: {},
+                parent: null,
+                key: path,
+                size: 0,
+                isDirectory: false,
+            },
+            callCount: 0,
+        };
+
+        self.getFileTreeOnMainBody(path, context, context.tree);
+    };
         
-        context.searching += files.length;
+    // getFileTree の実装
+    // main プロセスで実行
+    getFileTreeOnMainBody(path, context, parent) {
+        let self = this;
+        context.callCount += 1;
+        /*
+        if (context.callCount % (1024) == 0) {
+            console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
+        }
+        */
+        /*
+        if (context.callCount > 16) {
+            if  (context.searching == 0) {
+                context.callCount = 0;
+            }
+            else{
+                setTimeout(
+                    function() {
+                        fileInfo.getFileTreeOnMainBody(path, context, parent);
+                    },
+                    100
+                );
+                return;
+            }
+        }*/
 
-        files.forEach(function(pathElement){
-            let filePath = path + "/" + pathElement;
+        //let fs = require("electron").remote.require("fs");
+        let fs = require("fs");
 
-            fs.stat(filePath, function(err, stat){
+        fs.readdir(path, function(err, files){
+            // エラーでも探索対象に入っているので
+            // 探索済みにカウントする必要がある
+            context.searchingDir -= 1;
 
-                if (err) {
-                    //console.log(err);
-                }
-                else{
-                    // ファイル情報ノード作成
-                    let node = {
-                        size: stat.size,
-                        isDirectory: stat.isDirectory(),
-                        children: null,
-                        parent: parent,
-                        key: pathElement,
-                    };
-                    parent.children[pathElement] = node;
+            if (err) {
+                //console.log(err);
+                return;
+            }
+            
+            context.searching += files.length;
 
-                    if (stat.isDirectory()) {
-                        node.children = {};
-                        context.searchingDir++;
-                        self.getFileTreeOnMainBody(
-                            filePath, context, node
-                        );
+            files.forEach(function(pathElement){
+                let filePath = path + "/" + pathElement;
+
+                fs.stat(filePath, function(err, stat){
+
+                    if (err) {
+                        //console.log(err);
                     }
-                }
+                    else{
+                        // ファイル情報ノード作成
+                        let node = {
+                            size: stat.size,
+                            isDirectory: stat.isDirectory(),
+                            children: null,
+                            parent: parent,
+                            key: pathElement,
+                        };
+                        parent.children[pathElement] = node;
 
-                context.count++;
-                context.searching -= 1;
+                        if (stat.isDirectory()) {
+                            node.children = {};
+                            context.searchingDir++;
+                            self.getFileTreeOnMainBody(
+                                filePath, context, node
+                            );
+                        }
+                    }
 
-                if (context.count % (1024*4) == 0) {
-                    context.pogressCallback(context, filePath);
-                }
+                    context.count++;
+                    context.searching -= 1;
 
-                if (context.searching == 0 && context.searchingDir == 0){
-                    // Electron のリモート呼び出しは浅いコピーしかしないので
-                    // JSON にシリアライズしておくる
-                    //context.callback(context, JSON.stringify(context.tree));
+                    if (context.count % (1024*4) == 0) {
+                        context.pogressCallback(context, filePath);
+                    }
 
-                    context.finishCallback(context, context.tree);
-                }
+                    if (context.searching == 0 && context.searchingDir == 0){
+                        // Electron のリモート呼び出しは浅いコピーしかしないので
+                        // JSON にシリアライズしておくる
+                        //context.callback(context, JSON.stringify(context.tree));
+
+                        context.finishCallback(context, context.tree);
+                    }
+                });
             });
-        });
 
-    });
+        });
+    };
 };
 
-module.exports = FileInfo;
+module.exports.FileInfo = FileInfo;
