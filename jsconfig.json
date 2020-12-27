@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
+        "target": "es2020",
         "checkJs": true,
         "lib": [
         ]
@@ -9,8 +9,6 @@
         "node_modules",
         "work",
         "packaging-work",
-
-        "version.js",
-        "*.tag.html"
+        "version.js"
     ]
 }

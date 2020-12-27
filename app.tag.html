@@ -17,7 +17,7 @@
             </div>
             
             <div class="collapse navbar-collapse" id="id_app_navbar">
-                <!-- "navbar-right" alignes items to the right side-->
+                <!-- "navbar-right" aligned items to the right side-->
                 <ul class="nav navbar-nav navbar-left">
                     <li><a href="#home" onclick={onClickOpen}>
                         <span class="glyphicon glyphicon-folder-open"></span> 
@@ -48,7 +48,6 @@
         };
 
         // "Open folder" is clicked
-        /* global store.ACTION */
         self.onClickOpen = function() {
             self.closeDropDown();   // Close the list after click
             store.trigger(store.ACTION.FOLDER_OPEN);
@@ -210,7 +209,6 @@
                 if (!result.filePaths || result.canceled) {
                     return;
                 }
-                /* global store store.ACTION */
                 store.trigger(store.ACTION.TREE_LOAD, result.filePaths[0]);
             });
         });
