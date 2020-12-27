@@ -191,7 +191,7 @@
         store.on(store.CHANGE.TREE_LOADING, function(store){
             self.statusBarMessage = 
                 "" + store.treeLoadState.count + " files have been read." + 
-                "Currently, reading \"" + store.treeCurrentLoadingFileName + "\".";
+                "Reading \"" + store.treeCurrentLoadingFileName + "\".";
             self.update();
             self.onResize();
         });

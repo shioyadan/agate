@@ -235,6 +235,12 @@
             self.draw();
         });
 
+        // ファイルツリー情報を解放
+        store.on(store.CHANGE.TREE_RELEASED, function(){
+            self.tree = null;
+            self.draw();
+        });
+
         // ズーム
         store.on(store.CHANGE.CANVAS_ZOOM_IN, function(){
             self.startZoom(true, self.width / 2, self.height / 2);

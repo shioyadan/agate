@@ -12,10 +12,11 @@ const ACTION = {
 const CHANGE = {
     TREE_LOADED: 100,
     TREE_LOADING: 101,
-    FOLDER_OPEN: 102,
-    CANVAS_ZOOM_IN: 103,
-    CANVAS_ZOOM_OUT: 104,
-    CANVAS_POINTER_CHANGED: 105,
+    TREE_RELEASED: 102,
+    FOLDER_OPEN: 103,
+    CANVAS_ZOOM_IN: 104,
+    CANVAS_ZOOM_OUT: 105,
+    CANVAS_POINTER_CHANGED: 106,
 };
 
 
@@ -38,6 +39,10 @@ class Store {
 
         this.on(ACTION.TREE_LOAD, (folderName) => {
             this.treeFolderName = folderName;
+
+            this.fileInfo_.Cancel();
+            this.fileInfo_ = new FileInfo();
+            this.trigger(CHANGE.TREE_RELEASED);
 
             this.fileInfo_.getFileTree(
                 folderName,

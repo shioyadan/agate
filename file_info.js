@@ -1,6 +1,11 @@
 class FileInfo{
     constructor() {
+        this.canceled = false;
+    }
 
+    // キャンセル
+    Cancel() {
+        this.canceled = true;
     }
 
     // tree で渡されてくるツリーにおいて，
@@ -70,6 +75,11 @@ class FileInfo{
     getFileTreeOnMainBody(path, context, parent) {
         let self = this;
         context.callCount += 1;
+
+        if (this.canceled) {
+            return;
+        }
+
         /*
         if (context.callCount % (1024) == 0) {
             console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
