@@ -15,6 +15,7 @@ build: clean
 		--ignore work \
 		--ignore packaging-work \
 		--ignore .vscode \
+		--asar \
 		--prune=true	# Exclude devDependencies
 
 # アーカイブに固める
