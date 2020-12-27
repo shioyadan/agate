@@ -1,3 +1,5 @@
+const {FileInfo} = require("./file_info.js");
+
 const ACTION = {
     TREE_LOAD: 0,
     TREE_LOADED: 1,
@@ -16,7 +18,6 @@ const CHANGE = {
 
 class Store {
     constructor() {
-        let self = this;
         this.handlers_ = {};
 
         this.tree = null;
@@ -30,7 +31,6 @@ class Store {
         this.pointedPath = "";
         this.pointedFileNode = null;
 
-        /* globals riot FileInfo */
         this.fileInfo_ = new FileInfo();
 
         this.on(ACTION.TREE_LOAD, (folderName) => {

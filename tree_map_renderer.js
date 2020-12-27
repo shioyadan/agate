@@ -1,3 +1,5 @@
+const {TreeMap} = require("./tree_map.js");
+
 class TreeMapRenderer {
     constructor() {
 
@@ -8,7 +10,6 @@ class TreeMapRenderer {
         // rect の各方向に足される
         this.TILE_MARGIN = [8, 8 + this.FONT_SIZE, -8, -8];
     
-        /*global TreeMap*/ 
         this.treeMap_ = new TreeMap();
     }
 

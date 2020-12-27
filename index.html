@@ -20,7 +20,6 @@
 
       <!-- riot -->
       <script src="./node_modules/riot/riot+compiler.js" type="text/javascript"></script>
-      <script src="./node_modules/riotcontrol/riotcontrol.js" type="text/javascript"></script>
 
       <!-- このアプリの CSS -->
     <link href="index.css" rel="stylesheet">
@@ -30,11 +29,6 @@
 <body>
 
     <!-- タグの定義 -->
-    <script type="text/javascript" src="tree_map.js" charset="UTF-8"></script>
-    <script type="text/javascript" src="tree_map_renderer.js" charset="UTF-8"></script>
-    <script type="text/javascript" src="file_info.js" charset="UTF-8"></script>
-    <script type="text/javascript" src="store.js" charset="UTF-8"></script>
-
     <script type="riot/tag" src="modal_dialog.tag.html" charset="UTF-8"></script>
     <script type="riot/tag" src="tree_map_canvas.tag.html" charset="UTF-8"></script>
     <script type="riot/tag" src="app.tag.html" charset="UTF-8"></script>
@@ -48,9 +42,8 @@
 
     <!-- マウントの実行 -->
     <script>
-        /* globals riot RiotControl Store */
+        const {Store} = require("./store.js");
         let store = new Store();    // Create a store instance.
-        RiotControl.addStore(store); // Register the store in central dispatch.
         riot.mount("app");
     </script>
 

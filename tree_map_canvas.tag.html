@@ -19,7 +19,8 @@
         self.tree = null;
 
         // ツリーマップ
-        /*global TreeMapRenderer RiotControl ACTION */ 
+        /** @type {import("../tree_map_renderer.js").TreeMapRenderer} */
+        const {TreeMapRenderer} = require("./tree_map_renderer.js");
         self.treeMapRenderer = new TreeMapRenderer();
 
         // 表示系
@@ -95,7 +96,7 @@
             let pointedPath = 
                 self.treeMapRenderer.getPathFromFileNode(pointedFileNode);
             //console.log(self.pointedPath);
-            RiotControl.trigger(ACTION.CANVAS_POINTER_CHANGE, pointedPath, pointedFileNode);
+            store.trigger(store.ACTION.CANVAS_POINTER_CHANGE, pointedPath, pointedFileNode);
         };
 
         self.onMouseDown = function(e){
@@ -229,16 +230,16 @@
         };
 
         // ファイルツリー情報をセット
-        RiotControl.on(ACTION.TREE_LOADED, function(store){
+        store.on(store.ACTION.TREE_LOADED, function(store){
             self.tree = store.tree;
             self.draw();
         });
 
         // ズーム
-        RiotControl.on(ACTION.CANVAS_ZOOM_IN, function(){
+        store.on(store.ACTION.CANVAS_ZOOM_IN, function(){
             self.startZoom(true, self.width / 2, self.height / 2);
         });
-        RiotControl.on(ACTION.CANVAS_ZOOM_OUT, function(){
+        store.on(store.ACTION.CANVAS_ZOOM_OUT, function(){
             self.startZoom(false, self.width / 2, self.height / 2);
         });
 
