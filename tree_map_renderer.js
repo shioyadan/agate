@@ -1,4 +1,5 @@
 const {TreeMap} = require("./tree_map.js");
+const {FileNode} = require("./file_info.js");
 
 class TreeMapRenderer {
     constructor() {
@@ -25,6 +26,13 @@ class TreeMapRenderer {
     // canvas に対し，tree のファイルツリーを
     // virtualWidth/virtualHeight に対応した大きさの tree map を生成し，
     // そこの上の viewPort を描画する．
+    /**
+     * @param {*} canvas 
+     * @param {FileNode} tree 
+     * @param {number} virtualWidth 
+     * @param {number} virtualHeight 
+     * @param {*} viewPort 
+     */
     render(canvas, tree, virtualWidth, virtualHeight, viewPort) {
         let self = this;
 

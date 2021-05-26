@@ -1,15 +1,41 @@
 //
 // baseAspectX/baseAspectY: 生成するツリーマップ絶対のアスペクト比
 //
+const {FileNode} = require("./file_info.js");
+
+class DivNode {
+    constructor() {
+        /** @type {FileNode} */
+        this.fileNode = null;
+
+        /** @type {DivNode[]} */
+        this.children = [];
+
+        this.size = 0;
+        this.key = "";
+    }
+}
+
+class TreeMapCacheEntry {
+    constructor(rect, areas) {
+        this.rect = rect;
+        this.areas = areas;
+    }
+}
 
 class TreeMap {
     constructor() {
         this.cachedAspectRatio_ = 1.0;   // (幅)/(高さ)
+        /** @type {Object<string,TreeMapCacheEntry>} */
         this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
         this.areas_ = null; // 生成済み領域情報
     }
 
     // ファイルノードからパスを得る
+    /**
+     * @param {FileNode} fileNode 
+     * @returns {string}
+     */
     getPathFromFileNode(fileNode){
         if (!fileNode) {
             return null;
@@ -28,6 +54,12 @@ class TreeMap {
 
     // キャッシュされたバイナリツリーを得る
     // キャッシュは fileTree 内部に直に保持される
+    /**
+     * 
+     * @param {FileNode} fileNode 
+     * @param {number} aspectRatio 
+     * @returns 
+     */
     getDivTree(fileNode, aspectRatio){
         let self = this;
 
@@ -40,10 +72,11 @@ class TreeMap {
         // 上位から2階層分のキャッシュを作っていくので，ここにくるのは最上位の時のみ
         let path = self.getPathFromFileNode(fileNode);
         if (!(path in self.treeMapCache_)){
-            self.treeMapCache_[path] = {
-                rect: [0, 0, aspectRatio*1.0, 1.0],
-                areas: null,
-            };
+            let entry = new TreeMapCacheEntry(
+                [0, 0, aspectRatio*1.0, 1.0],
+                null
+            );
+            self.treeMapCache_[path] = entry;
         }
 
         let cache = self.treeMapCache_[path];
@@ -63,10 +96,10 @@ class TreeMap {
             for (let key in areas) {
                 let childPath = self.getPathFromFileNode(fileNode.children[key]); 
                 let r = areas[key];
-                self.treeMapCache_[childPath] = {
-                    rect: [0, 0, r[2] - r[0], r[3] - r[1]],
-                    areas: null
-                };
+                self.treeMapCache_[childPath] = new TreeMapCacheEntry(
+                    [0, 0, r[2] - r[0], r[3] - r[1]],
+                    null
+                );
             }
 
             // 縦横それぞれ0 から 1.0 に正規化して保存
@@ -87,6 +120,10 @@ class TreeMap {
     // このバイナリツリーは各ノードにおける左右の大きさ（ファイル容量の合計）
     // がなるべくバランスするようにしてある．これによってタイルのアスペクト比
     // が小さくなる･･･ と思う
+    /**
+     * @param {FileNode} fileNode 
+     * @returns {DivNode}
+     */
     makeDivTree(fileNode) {
         let fileChildren = fileNode.children;
         let keys = Object.keys(fileChildren);
@@ -145,7 +182,7 @@ class TreeMap {
             makeDivNode(divNode.children[1], right, fileChildren);
         }
 
-        let divTree = {};
+        let divTree = new DivNode;
         makeDivNode(divTree, keys, fileChildren);
         return divTree;
     };
@@ -155,6 +192,13 @@ class TreeMap {
     // divNode: バイナリツリーのノード
     // divided: 分割結果の矩形のハッシュ（ファイル名 -> 矩形）
     // rect: 分割対象の矩形．これを divNode に従い再帰的に分割
+    /**
+     * 
+     * @param {DivNode} divNode 
+     * @param {*} divided 
+     * @param {*} rect 
+     * @returns 
+     */
     divideRects(divNode, divided, rect) {
         let self = this;
 
@@ -190,6 +234,14 @@ class TreeMap {
     };
 
     // 描画領域の作成
+    /**
+     * @param {FileNode} fileNode 
+     * @param {*} virtWidth 
+     * @param {*} virtHeight 
+     * @param {*} viewPort 
+     * @param {*} margin 
+     * @returns 
+     */
     createTreeMap(
         fileNode, virtWidth, virtHeight, viewPort, margin
     ) {

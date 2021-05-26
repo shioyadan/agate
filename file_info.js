@@ -1,8 +1,8 @@
-class TreeNode {
+class FileNode {
     constructor() {
-        /** @type {Object<string,TreeNode>} */
+        /** @type {Object<string,FileNode>} */
         this.children = {};
-        /** @type {TreeNode} */
+        /** @type {FileNode} */
         this.parent = null;
         this.key = "";
         this.size = 0;
@@ -11,14 +11,14 @@ class TreeNode {
     }
 }
 
-class TreeContext {
+class FileContext {
     constructor() {
         this.count = 0;
         this.finishCallback = null;
         this.progressCallback = null;
         this.searching = 0;
         this.searchingDir = 1;
-        /** @type {TreeNode} */
+        /** @type {FileNode} */
         this.tree = null;
         this.callCount = 0;
     }
@@ -36,7 +36,7 @@ class FileInfo {
 
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
-    /** @param {TreeNode} tree */
+    /** @param {FileNode} tree */
     updateDirectorySize(tree) {
         let size = 0;
         for(let key in tree.children) {
@@ -49,7 +49,7 @@ class FileInfo {
         return size;
     };
 
-    /** @param {TreeNode} tree */
+    /** @param {FileNode} tree */
     updateDirectoryFileCount(tree) {
         let fileCount = 0;
         for(let key in tree.children) {
@@ -92,10 +92,10 @@ class FileInfo {
     // main プロセスで実行
     getFileTreeOnMain(path, finishCallback, progressCallback) {
         let self = this;
-        let node = new TreeNode;
+        let node = new FileNode;
         node.key = path;
 
-        let context = new TreeContext;
+        let context = new FileContext;
         context.finishCallback = finishCallback;
         context.progressCallback = progressCallback;
         context.tree = node;
@@ -106,8 +106,8 @@ class FileInfo {
     // main プロセスで実行
     /**
      * @param {string} path 
-     * @param {TreeContext} context 
-     * @param {TreeNode} parent 
+     * @param {FileContext} context 
+     * @param {FileNode} parent 
      */
     getFileTreeOnMainBody(path, context, parent) {
         let self = this;
@@ -163,7 +163,7 @@ class FileInfo {
                     }
                     else{
                         // ファイル情報ノード作成
-                        let node = new TreeNode;
+                        let node = new FileNode;
                         node.size = stat.size;
                         node.isDirectory = stat.isDirectory();
                         node.children = null;
@@ -202,4 +202,4 @@ class FileInfo {
 };
 
 module.exports.FileInfo = FileInfo;
-module.exports.TreeNode = TreeNode;
+module.exports.FileNode = FileNode;
