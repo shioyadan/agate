@@ -1,4 +1,30 @@
-class FileInfo{
+class TreeNode {
+    constructor() {
+        /** @type {Object<string,TreeNode>} */
+        this.children = {};
+        /** @type {TreeNode} */
+        this.parent = null;
+        this.key = "";
+        this.size = 0;
+        this.fileCount = 1;
+        this.isDirectory = false;
+    }
+}
+
+class TreeContext {
+    constructor() {
+        this.count = 0;
+        this.finishCallback = null;
+        this.progressCallback = null;
+        this.searching = 0;
+        this.searchingDir = 1;
+        /** @type {TreeNode} */
+        this.tree = null;
+        this.callCount = 0;
+    }
+}
+
+class FileInfo {
     constructor() {
         this.canceled = false;
     }
@@ -10,6 +36,7 @@ class FileInfo{
 
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
+    /** @param {TreeNode} tree */
     updateDirectorySize(tree) {
         let size = 0;
         for(let key in tree.children) {
@@ -20,6 +47,19 @@ class FileInfo{
             size += val.size;
         }
         return size;
+    };
+
+    /** @param {TreeNode} tree */
+    updateDirectoryFileCount(tree) {
+        let fileCount = 0;
+        for(let key in tree.children) {
+            let val = tree.children[key];
+            if (val.isDirectory && val.children) {
+                val.fileCount = this.updateDirectoryFileCount(val);
+            }
+            fileCount += val.fileCount;
+        }
+        return fileCount;
     };
 
     // path により指定したフォルダ以下のファイルツリーを取得
@@ -39,6 +79,7 @@ class FileInfo{
 
                 // 各ディレクトリのサイズ反映
                 self.updateDirectorySize(tree);
+                self.updateDirectoryFileCount(tree);
 
                 // 呼び出し元に返す
                 finishCallback(context, tree);
@@ -51,27 +92,23 @@ class FileInfo{
     // main プロセスで実行
     getFileTreeOnMain(path, finishCallback, progressCallback) {
         let self = this;
-        let context = {
-            count: 0,
-            finishCallback: finishCallback,
-            progressCallback: progressCallback,
-            searching: 0,
-            searchingDir: 1,
-            tree: {
-                children: {},
-                parent: null,
-                key: path,
-                size: 0,
-                isDirectory: false,
-            },
-            callCount: 0,
-        };
+        let node = new TreeNode;
+        node.key = path;
 
+        let context = new TreeContext;
+        context.finishCallback = finishCallback;
+        context.progressCallback = progressCallback;
+        context.tree = node;
         self.getFileTreeOnMainBody(path, context, context.tree);
     };
         
     // getFileTree の実装
     // main プロセスで実行
+    /**
+     * @param {string} path 
+     * @param {TreeContext} context 
+     * @param {TreeNode} parent 
+     */
     getFileTreeOnMainBody(path, context, parent) {
         let self = this;
         context.callCount += 1;
@@ -126,15 +163,14 @@ class FileInfo{
                     }
                     else{
                         // ファイル情報ノード作成
-                        let node = {
-                            size: stat.size,
-                            isDirectory: stat.isDirectory(),
-                            children: null,
-                            parent: parent,
-                            key: pathElement,
-                        };
-                        parent.children[pathElement] = node;
+                        let node = new TreeNode;
+                        node.size = stat.size;
+                        node.isDirectory = stat.isDirectory();
+                        node.children = null;
+                        node.parent = parent;
+                        node.key = pathElement;
 
+                        parent.children[pathElement] = node;
                         if (stat.isDirectory()) {
                             node.children = {};
                             context.searchingDir++;
@@ -166,3 +202,4 @@ class FileInfo{
 };
 
 module.exports.FileInfo = FileInfo;
+module.exports.TreeNode = TreeNode;
