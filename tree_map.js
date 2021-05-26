@@ -31,6 +31,15 @@ class TreeMap {
         this.areas_ = null; // 生成済み領域情報
     }
 
+    /**
+     * @param {FileNode} fileNode
+     * @returns {number}
+     */
+    getCriteria(fileNode) {
+        return fileNode.size;
+        //return fileNode.fileCount;
+    }
+
     // ファイルノードからパスを得る
     /**
      * @param {FileNode} fileNode 
@@ -130,13 +139,13 @@ class TreeMap {
 
         // 空ディレクトリ or 容量0のファイルははずしておかないと無限ループする
         keys = keys.filter((key) => {
-            return !(fileChildren[key].size < 1);
+            return !(this.getCriteria(fileChildren[key]) < 1);
         });
 
         // tree 直下のファイル/ディレクトリのサイズでソート
         keys.sort((a, b) => {
-            let sizeA = fileChildren[a].size;
-            let sizeB = fileChildren[b].size;
+            let sizeA = this.getCriteria(fileChildren[a]);
+            let sizeB = this.getCriteria(fileChildren[b]);
             if (sizeA > sizeB) return -1;
             if (sizeA < sizeB) return 1;
             return 0;
@@ -144,11 +153,18 @@ class TreeMap {
 
         // 再帰的にツリーを作成
         // 渡された node の中身を書き換える必要があるので注意
+        /**
+         * @param {DivNode} divNode 
+         * @param {string[]} fileNames 
+         * @param {Object<string,FileNode>} fileChildren 
+         * @returns 
+         */
+        let self = this;
         function makeDivNode(divNode, fileNames, fileChildren) {
 
             // 末端
             if (fileNames.length <= 1) {
-                divNode.size = fileChildren[fileNames[0]].size;
+                divNode.size = self.getCriteria(fileChildren[fileNames[0]]);
                 divNode.key = fileNames[0];
                 divNode.children = null;
                 divNode.fileNode = fileChildren[fileNames[0]];
@@ -165,16 +181,16 @@ class TreeMap {
                 // 左右のうち，現在小さい方に加えることでバランスさせる
                 if (leftSize < rightSize) {
                     left.push(fileName);
-                    leftSize += fileChildren[fileName].size;
+                    leftSize += self.getCriteria(fileChildren[fileName]);
                 }
                 else{
                     right.push(fileName);
-                    rightSize += fileChildren[fileName].size;
+                    rightSize += self.getCriteria(fileChildren[fileName]);
                 }
             }
 
             divNode.size = leftSize + rightSize;
-            divNode.children = [{},{}];
+            divNode.children = [new DivNode, new DivNode];
             divNode.key = "";
             divNode.fileNode = null;
 
