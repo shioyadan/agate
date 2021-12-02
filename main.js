@@ -6,6 +6,11 @@ let electron = require("electron");  // Module to control application life.
 // It is equivalent to something like "app = electron.app"
 let {app, BrowserWindow} = electron;    
 
+// appendSwitch は複数回呼ぶと，前回に与えたスイッチを上書きしてしまうので注意
+// --max-old-space-size=8192: 使用できるメモリの最大使用量を 8GB に
+// --expose-gc: Make it possible to call GC manually
+app.commandLine.appendSwitch("js-flags", "--expose-gc --max-old-space-size=8192");
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow = null;
