@@ -156,7 +156,7 @@ class FileInfo {
             files.forEach(function(pathElement){
                 let filePath = path + "/" + pathElement;
 
-                fs.stat(filePath, function(err, stat){
+                fs.lstat(filePath, function(err, stat){
 
                     if (err) {
                         //console.log(err);
@@ -171,7 +171,7 @@ class FileInfo {
                         node.key = pathElement;
 
                         parent.children[pathElement] = node;
-                        if (stat.isDirectory()) {
+                        if (stat.isDirectory() && !stat.isSymbolicLink()) {
                             node.children = {};
                             context.searchingDir++;
                             self.getFileTreeOnMainBody(
