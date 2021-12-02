@@ -32,8 +32,9 @@ class TreeMapRenderer {
      * @param {number} virtualWidth 
      * @param {number} virtualHeight 
      * @param {*} viewPort 
+     * @param {boolean} isSizeMode
      */
-    render(canvas, tree, virtualWidth, virtualHeight, viewPort) {
+    render(canvas, tree, virtualWidth, virtualHeight, viewPort, isSizeMode) {
         let self = this;
 
         let width = canvas.width;
@@ -51,7 +52,8 @@ class TreeMapRenderer {
             virtualWidth, 
             virtualHeight, 
             viewPort,
-            self.TILE_MARGIN
+            self.TILE_MARGIN,
+            isSizeMode
         );
 
         let fillStyle = [];
@@ -97,16 +99,23 @@ class TreeMapRenderer {
             c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
         }
 
-        function sizeToStr(size) {
-            if (size > 1024*1024) {
-                return "" + Math.ceil(size/1024/1024) + " MB";
+        function fileNodeToStr(fileNode) {
+            let str = "";
+            let num = isSizeMode ? fileNode.size : fileNode.fileCount;
+            if (num > 1024*1024) {
+                str = "" + Math.ceil(num/1024/1024) + "M";
             }
-            else if (size > 1024) {
-                return "" + Math.ceil(size/1024) + " KB";
+            else if (num > 1024) {
+                str = "" + Math.ceil(num/1024) + "K";
             }
             else {
-                return "" + size + " B";
+                str = "" + num;
             }
+            str += isSizeMode ? "B" : " files";
+            if (num == 1) {
+                str = "";
+            }
+            return str;
         }
 
         // 文字領域が確保できた場合は描画
@@ -136,7 +145,7 @@ class TreeMapRenderer {
             c.strokeText(a.key, pos[0], pos[1]);
 
             if (!a.fileNode.children) {
-                c.strokeText(sizeToStr(a.fileNode.size), pos[0], pos[1] + self.FONT_SIZE*1.2);
+                c.strokeText(fileNodeToStr(a.fileNode), pos[0], pos[1] + self.FONT_SIZE*1.2);
             }
         }
 
@@ -154,7 +163,7 @@ class TreeMapRenderer {
             c.fillText(a.key, pos[0], pos[1]);
 
             if (!a.fileNode.children) {
-                c.fillText(sizeToStr(a.fileNode.size), pos[0], pos[1] + self.FONT_SIZE*1.2);
+                c.fillText(fileNodeToStr(a.fileNode), pos[0], pos[1] + self.FONT_SIZE*1.2);
             }
         }
     }

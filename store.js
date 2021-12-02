@@ -7,16 +7,18 @@ const ACTION = {
     CANVAS_POINTER_CHANGE: 4,
     CANVAS_ZOOM_IN: 6,
     CANVAS_ZOOM_OUT: 7,
+    MODE_CHANGE: 8,
 };
 
 const CHANGE = {
     TREE_LOADED: 100,
     TREE_LOADING: 101,
     TREE_RELEASED: 102,
-    FOLDER_OPEN: 103,
-    CANVAS_ZOOM_IN: 104,
-    CANVAS_ZOOM_OUT: 105,
-    CANVAS_POINTER_CHANGED: 106,
+    TREE_MODE_CHANGED: 103,
+    FOLDER_OPEN: 104,
+    CANVAS_ZOOM_IN: 105,
+    CANVAS_ZOOM_OUT: 106,
+    CANVAS_POINTER_CHANGED: 107,
 };
 
 
@@ -36,6 +38,8 @@ class Store {
         this.pointedFileNode = null;
 
         this.fileInfo_ = new FileInfo();
+
+        this.isSizeMode = true;
 
         this.on(ACTION.TREE_LOAD, (folderName) => {
             this.treeFolderName = folderName;
@@ -75,6 +79,12 @@ class Store {
         this.on(ACTION.FOLDER_OPEN, () => {this.trigger(CHANGE.FOLDER_OPEN);});
         this.on(ACTION.CANVAS_ZOOM_IN, () => {this.trigger(CHANGE.CANVAS_ZOOM_IN);});
         this.on(ACTION.CANVAS_ZOOM_OUT, () => {this.trigger(CHANGE.CANVAS_ZOOM_OUT);});
+
+        this.on(ACTION.MODE_CHANGE, (isSizeMode) => {
+            this.isSizeMode = isSizeMode;
+            this.trigger(CHANGE.TREE_MODE_CHANGED, this);
+        });
+        
     }
 
     on(event, handler) {

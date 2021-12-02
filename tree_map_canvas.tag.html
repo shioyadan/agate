@@ -18,6 +18,9 @@
         // ファイルツリー
         self.tree = null;
 
+        // 描画モード
+        self.isSizeMode = true;
+
         // ツリーマップ
         /** @type {import("../tree_map_renderer.js").TreeMapRenderer} */
         const {TreeMapRenderer} = require("./tree_map_renderer.js");
@@ -225,13 +228,20 @@
                     self.viewPoint[1], 
                     self.viewPoint[0] + width, 
                     self.viewPoint[1] + height
-                ]
+                ],
+                self.isSizeMode
             );
         };
 
         // ファイルツリー情報をセット
         store.on(store.CHANGE.TREE_LOADED, function(store){
             self.tree = store.tree;
+            self.draw();
+        });
+
+        // モードの変更
+        store.on(store.CHANGE.TREE_MODE_CHANGED, function(store){
+            self.isSizeMode = store.isSizeMode;
             self.draw();
         });
 

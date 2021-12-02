@@ -26,6 +26,7 @@ class TreeMapCacheEntry {
 class TreeMap {
     constructor() {
         this.cachedAspectRatio_ = 1.0;   // (幅)/(高さ)
+        this.cachedSizeMode = true; // size で描画するかどうか
         /** @type {Object<string,TreeMapCacheEntry>} */
         this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
         this.areas_ = null; // 生成済み領域情報
@@ -36,8 +37,7 @@ class TreeMap {
      * @returns {number}
      */
     getCriteria(fileNode) {
-        return fileNode.size;
-        //return fileNode.fileCount;
+        return this.cachedSizeMode ? fileNode.size : fileNode.fileCount;
     }
 
     // ファイルノードからパスを得る
@@ -256,12 +256,19 @@ class TreeMap {
      * @param {*} virtHeight 
      * @param {*} viewPort 
      * @param {*} margin 
+     * @param {boolean} isSizeMode
      * @returns 
      */
     createTreeMap(
-        fileNode, virtWidth, virtHeight, viewPort, margin
+        fileNode, virtWidth, virtHeight, viewPort, margin, isSizeMode
     ) {
         let self = this;
+        
+        // モードが変わった際はキャッシュを破棄
+        if (this.cachedSizeMode != isSizeMode){
+            this.cachedSizeMode = isSizeMode;
+            self.treeMapCache_ = {};
+        }
 
         function traverse(fileNode, areas, virtRect, level) {
             let cache = self.getDivTree(fileNode, virtWidth/virtHeight);

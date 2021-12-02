@@ -31,6 +31,16 @@
                         <span class="glyphicon glyphicon-zoom-out"></span> 
                         Zoom out
                     </a></li>
+
+                    <li><a href="#home" onclick={onClickFileSize}>
+                        <span class={"glyphicon " + (fileSize ? "glyphicon-check" : "glyphicon-unchecked")}></span> 
+                        Size
+                    </a></li>
+
+                    <li><a href="#home" onclick={onClickFileCount}>
+                        <span class={"glyphicon " + (fileSize ? "glyphicon-unchecked" : "glyphicon-check")}></span> 
+                        Count
+                    </a></li>
                 </ul>
             </div>
 
@@ -41,6 +51,7 @@
         let self = this;
 
         self.title = "";
+        self.fileSize = true;
 
         // Close the dropdown list
         self.closeDropDown = function(){
@@ -59,6 +70,15 @@
         self.onClickZoomOut = function() {
             self.closeDropDown();   // Close the list after click
             store.trigger(store.ACTION.CANVAS_ZOOM_OUT);
+        };
+
+        self.onClickFileSize = function() {
+            self.fileSize = true;
+            store.trigger(store.ACTION.MODE_CHANGE, self.fileSize);
+        };
+        self.onClickFileCount = function() {
+            self.fileSize = false;
+            store.trigger(store.ACTION.MODE_CHANGE, self.fileSize);
         };
 
         // 高さを取得
@@ -221,19 +241,29 @@
                 return;
             }
 
-            function sizeToStr(size) {
-                if (size > 1024*1024) {
-                    return "" + Math.ceil(size/1024/1024) + " MB";
+            let isSizeMode = store.isSizeMode;
+            function fileNodeToStr(fileNode) {
+                let str = "";
+                let num = isSizeMode ? fileNode.size : fileNode.fileCount;
+                if (num > 1024*1024) {
+                    str = "" + Math.ceil(num/1024/1024) + "M";
                 }
-                else if (size > 1024) {
-                    return "" + Math.ceil(size/1024) + " KB";
+                else if (num > 1024) {
+                    str = "" + Math.ceil(num/1024) + "K";
                 }
                 else {
-                    return "" + size + " B";
+                    str = "" + num;
+                }
+                str += isSizeMode ? "B" : " files";
+
+                if (isSizeMode && num == 1) {
+                    return "";
+                }
+                else {
+                    return " [" + str + "]";
                 }
             }
-
-            self.statusBarMessage = path + " [" + sizeToStr(fileNode.size) + "]";
+            self.statusBarMessage = path + fileNodeToStr(fileNode);
             self.update();
             self.onResize();
         });
