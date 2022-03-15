@@ -23,6 +23,10 @@
                         <span class="glyphicon glyphicon-folder-open"></span> 
                         Open a folder
                     </a></li>
+                    <li><a href="#home" onclick={onClickImport}>
+                        <span class="glyphicon glyphicon-file"></span> 
+                        Import a file
+                    </a></li>
                     <li><a href="#home" onclick={onClickZoomIn}>
                         <span class="glyphicon glyphicon-zoom-in"></span> 
                         Zoom in
@@ -62,6 +66,10 @@
         self.onClickOpen = function() {
             self.closeDropDown();   // Close the list after click
             store.trigger(store.ACTION.FOLDER_OPEN);
+        };
+        self.onClickImport = function() {
+            self.closeDropDown();   // Close the list after click
+            store.trigger(store.ACTION.FILE_IMPORT);
         };
         self.onClickZoomIn = function() {
             self.closeDropDown();   // Close the list after click
@@ -195,23 +203,27 @@
             self.onResize();    // サイズを適用しておくために1回呼んでおく
 
             // 一回開く
-            store.trigger(store.ACTION.FOLDER_OPEN);
+            //store.trigger(store.ACTION.FOLDER_OPEN);
         };
 
         // 読み込み終了時
         store.on(store.CHANGE.TREE_LOADED, function(store){
-            self.statusBarMessage = 
+            if (self.treeLoadState) {
+                self.statusBarMessage = 
                 store.treeLoadState.count + " files were read " + 
                 "from " + "\"" + store.treeFolderName + "\".";
+            }
             self.update();
             self.onResize();
         });
 
         // 読み込み中に定期的に呼ばれる
         store.on(store.CHANGE.TREE_LOADING, function(store){
-            self.statusBarMessage = 
-                "" + store.treeLoadState.count + " files have been read." + 
-                "Reading \"" + store.treeCurrentLoadingFileName + "\".";
+            if (self.treeLoadState) {
+                self.statusBarMessage = 
+                    "" + store.treeLoadState.count + " files have been read." + 
+                    "Reading \"" + store.treeCurrentLoadingFileName + "\".";
+            }
             self.update();
             self.onResize();
         });
@@ -230,6 +242,22 @@
                     return;
                 }
                 store.trigger(store.ACTION.TREE_LOAD, result.filePaths[0]);
+            });
+        });
+
+        store.on(store.CHANGE.FILE_IMPORT, function(){
+            const dialog = self.remote.dialog;
+            dialog.showOpenDialog(
+                self.remote.getCurrentWindow(), {
+                    properties: ["openFile"],
+                    title: "Please specify a JSON file.",
+                    defaultPath: "."
+                }
+            ).then((result) => {
+                if (!result.filePaths || result.canceled) {
+                    return;
+                }
+                store.trigger(store.ACTION.TREE_IMPORT, result.filePaths[0]);
             });
         });
 

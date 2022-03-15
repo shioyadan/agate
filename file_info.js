@@ -1,5 +1,7 @@
 //let fs = require("@electron/remote").require("fs");
 let fs = require("fs");
+let path = require("path");
+
 
 class FileNode {
     constructor() {
@@ -7,7 +9,7 @@ class FileNode {
         this.children = {};
         /** @type {FileNode} */
         this.parent = null;
-        this.key = "";
+        this.key = "";  // ノードに対応するファイル名
         this.size = 0;
         this.fileCount = 1;
         this.isDirectory = false;
@@ -67,6 +69,12 @@ class FileInfo {
 
     // path により指定したフォルダ以下のファイルツリーを取得
     // render プロセスで実行
+    /**
+     * 
+     * @param {string} path 
+     * @param {function(FileContext, FileNode): void} finishCallback 
+     * @param {function(FileContext, string): void} progressCallback 
+     */
     getFileTree(path, finishCallback, progressCallback) {
 
         let node = new FileNode;
@@ -183,7 +191,92 @@ class FileInfo {
 
         });
     };
+
+    /**
+     * @param {FileNode} srcRoot 
+     */
+    export(pathRoot, srcRoot) {
+        /**
+         * @param {FileNode} dst 
+         * @param {FileNode} src 
+         */
+        function process(dst, src) {
+            dst.fileCount = src.fileCount;
+            dst.isDirectory = src.isDirectory;
+            dst.key = src.key;
+            dst.size = src.size;
+            dst.parent = null;  // Avoid circular dependency
+            for (let i in src.children) {
+                dst.children[i] = src.children[i];
+                process(dst.children[i], src.children[i]);
+            }
+        }
+
+        let dstRoot = new FileNode();
+        process(dstRoot, srcRoot);
+
+        let exportData = {
+            absPath: path.resolve(pathRoot),
+            tree: dstRoot
+        }
+
+        return JSON.stringify(exportData, null, "\t");
+    }
+
+    import(srcRoot, finishCallback) {
+        /**
+         * @param {FileNode} dst 
+         * @param {FileNode} src 
+         */
+         function process(dst, src) {
+            dst.fileCount = src.fileCount;
+            dst.isDirectory = src.isDirectory;
+            dst.key = src.key;
+            dst.size = src.size;
+            for (let i in src.children) {
+                dst.children[i] = src.children[i];
+                dst.children[i].parent = dst;
+                process(dst.children[i], src.children[i]);
+            }
+        }
+
+        let dstRoot = new FileNode();
+        process(dstRoot, srcRoot["tree"]);
+        finishCallback(dstRoot, srcRoot["absPath"]);
+        return;
+    }
 };
 
-module.exports.FileInfo = FileInfo;
-module.exports.FileNode = FileNode;
+// 直接実行された場合
+if (require.main === module) {
+
+    let targetPath = process.argv[2];
+    //targetPath = "c:"
+
+    if (!targetPath) {
+        console.log(`Usage: node file_info.js <path_to_directory> > out.json`);
+        process.exit(0);
+    }
+    let stats = fs.lstatSync(targetPath);
+    if (!stats.isDirectory()) {
+        console.log(`Error: ${targetPath} is not a valid directory.`);
+        process.exit(1);
+    }
+    else {
+        let fileInfo = new FileInfo();
+        fileInfo.getFileTree(
+            path.resolve(targetPath), 
+            (context, node) =>{ // finish
+                console.log(fileInfo.export(targetPath, node));
+            },
+            (context, path) => {    // progress
+                process.stderr.write(".");
+            }
+        );
+    }
+}
+else {
+    module.exports.FileInfo = FileInfo;
+    module.exports.FileNode = FileNode;
+}
+
