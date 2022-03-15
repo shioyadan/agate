@@ -37,12 +37,12 @@ class FileInfo {
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
     /** @param {FileNode} tree */
-    updateDirectorySize(tree) {
+    updateDirectorySize_(tree) {
         let size = 0;
         for(let key in tree.children) {
             let val = tree.children[key];
             if (val.isDirectory && val.children) {
-                val.size = this.updateDirectorySize(val);
+                val.size = this.updateDirectorySize_(val);
             }
             size += val.size;
         }
@@ -50,12 +50,12 @@ class FileInfo {
     };
 
     /** @param {FileNode} tree */
-    updateDirectoryFileCount(tree) {
+    updateDirectoryFileCount_(tree) {
         let fileCount = 0;
         for(let key in tree.children) {
             let val = tree.children[key];
             if (val.isDirectory && val.children) {
-                val.fileCount = this.updateDirectoryFileCount(val);
+                val.fileCount = this.updateDirectoryFileCount_(val);
             }
             fileCount += val.fileCount;
         }
@@ -65,41 +65,24 @@ class FileInfo {
     // path により指定したフォルダ以下のファイルツリーを取得
     // render プロセスで実行
     getFileTree(path, finishCallback, progressCallback) {
-        let self = this;
-        // main プロセスで getFileListBody を呼び出す
-        //let remote = require("electron").remote.require("./file_info");
-        //remote.getFileTreeOnMain(path, function(context, treeJSON) {
 
-        self.getFileTreeOnMain(
-            path, 
-            function(context, treeJSON){
-                // JSON にシリアライズされて送られてくるので，展開する
-                //tree = JSON.parse(treeJSON);
-                let tree = treeJSON;
-
-                // 各ディレクトリのサイズ反映
-                self.updateDirectorySize(tree);
-                self.updateDirectoryFileCount(tree);
-
-                // 呼び出し元に返す
-                finishCallback(context, tree);
-            },
-            progressCallback
-        );
-    };
-
-    // getFileTree の実装のエントリポイント
-    // main プロセスで実行
-    getFileTreeOnMain(path, finishCallback, progressCallback) {
-        let self = this;
         let node = new FileNode;
         node.key = path;
 
         let context = new FileContext;
-        context.finishCallback = finishCallback;
         context.progressCallback = progressCallback;
         context.tree = node;
-        self.getFileTreeOnMainBody(path, context, context.tree);
+
+        context.finishCallback = (finishContext, tree) => {
+            // 各ディレクトリのサイズ反映
+            this.updateDirectorySize_(tree);
+            this.updateDirectoryFileCount_(tree);
+
+            // 呼び出し元に返す
+            finishCallback(finishContext, tree);
+        },
+        this.getFileTreeBody_(path, context, context.tree);
+
     };
         
     // getFileTree の実装
@@ -109,7 +92,7 @@ class FileInfo {
      * @param {FileContext} context 
      * @param {FileNode} parent 
      */
-    getFileTreeOnMainBody(path, context, parent) {
+    getFileTreeBody_(path, context, parent) {
         let self = this;
         context.callCount += 1;
 
@@ -174,7 +157,7 @@ class FileInfo {
                         if (stat.isDirectory() && !stat.isSymbolicLink()) {
                             node.children = {};
                             context.searchingDir++;
-                            self.getFileTreeOnMainBody(
+                            self.getFileTreeBody_(
                                 filePath, context, node
                             );
                         }
