@@ -1,3 +1,6 @@
+//let fs = require("@electron/remote").require("fs");
+let fs = require("fs");
+
 class FileNode {
     constructor() {
         /** @type {Object<string,FileNode>} */
@@ -121,8 +124,6 @@ class FileInfo {
             }
         }*/
 
-        //let fs = require("electron").remote.require("fs");
-        let fs = require("fs");
 
         fs.readdir(path, function(err, files){
             // エラーでも探索対象に入っているので

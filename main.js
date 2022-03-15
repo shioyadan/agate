@@ -1,10 +1,13 @@
-"user strict";
+"use strict";
 
 let electron = require("electron");  // Module to control application life.
 
 // This is written in "destructuring assignment" style.
 // It is equivalent to something like "app = electron.app"
 let {app, BrowserWindow} = electron;    
+
+// Remote モジュールを有効化
+require("@electron/remote/main").initialize();
 
 // appendSwitch は複数回呼ぶと，前回に与えたスイッチを上書きしてしまうので注意
 // --max-old-space-size=8192: 使用できるメモリの最大使用量を 8GB に
@@ -38,10 +41,11 @@ app.on("ready", function() {
         
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false,
-            enableRemoteModule: true
+            contextIsolation: false
         }
     });
+
+    require("@electron/remote/main").enable(mainWindow.webContents);
 
     // and load the index.html of the app.
     mainWindow.loadURL("file://" + __dirname + "/index.html");
