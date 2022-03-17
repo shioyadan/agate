@@ -14,7 +14,13 @@
 * ホイールダウン or  shift + ダブルクリック: 縮小
 * 右クリック: ポイントしたフォルダを開く
 
+## コマンドライン実行によるファイルのスキャン
 
+* GUI を起動するのが難しい場合，node.js で file_info.js を実行してスキャン結果をダンプし，それを読み込むことが出来る
+*  以下のようにして生成したダンプ（gzip 推奨）を，GUI の "Import a file" より読み込む
+    ```
+    node file_info.js <スキャン対象のパス> | gzip > out.log
+    ```
 ## 開発
 
     # Install node.js/npm
