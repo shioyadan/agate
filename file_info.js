@@ -83,7 +83,7 @@ class FileInfo {
      * @param {function(FileContext, string): void} progressCallback 
      * @param {function(FileNode, FileNode): void?} connectionHook
      */
-    getFileTree(path, finishCallback, progressCallback, connectionHook=null) {
+    getFileTree(path, finishCallback, progressCallback, connectionHook) {
 
         let node = new FileNode;
         node.key = path;

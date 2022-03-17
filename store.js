@@ -55,7 +55,8 @@ class Store {
                 (count, filePath)  => {
                     // 読み込み状態の更新
                     this.trigger(CHANGE.TREE_LOADING, this, count, filePath);       
-                }
+                },
+                null
             );
         });
 
