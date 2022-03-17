@@ -1,4 +1,4 @@
-//let fs = require("@electron/remote").require("fs");
+"use strict";
 let fs = require("fs");
 let path = require("path");
 let readline = require("readline");
