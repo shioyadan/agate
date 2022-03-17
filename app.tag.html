@@ -208,7 +208,7 @@
 
         // 読み込み終了時
         store.on(store.CHANGE.TREE_LOADED, function(store){
-            if (self.treeLoadState) {
+            if (store.treeLoadState) {
                 self.statusBarMessage = 
                 store.treeLoadState.count + " files were read " + 
                 "from " + "\"" + store.treeFolderName + "\".";
@@ -219,7 +219,7 @@
 
         // 読み込み中に定期的に呼ばれる
         store.on(store.CHANGE.TREE_LOADING, function(store){
-            if (self.treeLoadState) {
+            if (store.treeLoadState) {
                 self.statusBarMessage = 
                     "" + store.treeLoadState.count + " files have been read." + 
                     "Reading \"" + store.treeCurrentLoadingFileName + "\".";
