@@ -192,9 +192,21 @@ class FileInfo {
 
                         if (node.children) {
                             context.searchingDir++;
-                            self.getFileTreeBody_(
-                                filePath, context, node, connectionHook
-                            );
+                            if (context.searching > 1000) {
+                                function process(sleep) {
+                                    if (context.searching < 1000) {
+                                        self.getFileTreeBody_(filePath, context, node, connectionHook);
+                                    }
+                                    else {
+                                        sleep = sleep > 1000 ? 1000 : sleep;
+                                        setTimeout(() => {process(sleep*2)}, sleep);
+                                    }
+                                }
+                                process(100);
+                            }
+                            else {
+                                self.getFileTreeBody_(filePath, context, node, connectionHook);
+                            }
                         }
                     }
 
@@ -203,6 +215,7 @@ class FileInfo {
 
                     if (context.count % (1024*4) == 0) {
                         context.progressCallback(context.count, filePath);
+                        process.stderr.write(`[${context.searching},${context.searchingDir},${filePath}]`);
                     }
 
                     if (context.searching == 0 && context.searchingDir == 0){
