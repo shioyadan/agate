@@ -321,9 +321,9 @@ if (require.main === module) {
         fileInfo.getFileTree(
             path.resolve(targetPath), 
             (context, node) =>{ // finish
-                // console.log(fileInfo.export(targetPath, node));
                 //fileInfo.export(node);
                 console.log(`finished (lastID:${fileInfo.nextID-1})`);
+                process.stderr.write("finished");
             },
             (context, path) => {    // progress
                 process.stderr.write(".");
