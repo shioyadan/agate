@@ -215,7 +215,7 @@ class FileInfo {
 
                     if (context.count % (1024*4) == 0) {
                         context.progressCallback(context.count, filePath);
-                        process.stderr.write(`[${context.searching},${context.searchingDir},${filePath}]`);
+                        //process.stderr.write(`[${context.searching},${context.searchingDir},${filePath}]`);
                     }
 
                     if (context.searching == 0 && context.searchingDir == 0){
