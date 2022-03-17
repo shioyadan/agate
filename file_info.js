@@ -1,6 +1,7 @@
 //let fs = require("@electron/remote").require("fs");
 let fs = require("fs");
 let path = require("path");
+let readline = require("readline");
 
 
 class FileNode {
@@ -79,6 +80,7 @@ class FileInfo {
 
         let node = new FileNode;
         node.key = path;
+        node.isDirectory = true;
 
         let context = new FileContext;
         context.progressCallback = progressCallback;
@@ -86,8 +88,8 @@ class FileInfo {
 
         context.finishCallback = (finishContext, tree) => {
             // 各ディレクトリのサイズ反映
-            this.updateDirectorySize_(tree);
-            this.updateDirectoryFileCount_(tree);
+            tree.size = this.updateDirectorySize_(tree);
+            tree.fileCount = this.updateDirectoryFileCount_(tree);
 
             // 呼び出し元に返す
             finishCallback(finishContext, tree);
@@ -193,57 +195,72 @@ class FileInfo {
     };
 
     /**
+     * タブ区切りテキストにノードの情報をダンプしていく
      * @param {FileNode} srcRoot 
      */
-    export(pathRoot, srcRoot) {
-        /**
-         * @param {FileNode} dst 
-         * @param {FileNode} src 
-         */
-        function process(dst, src) {
-            dst.fileCount = src.fileCount;
-            dst.isDirectory = src.isDirectory;
-            dst.key = src.key;
-            dst.size = src.size;
-            dst.parent = null;  // Avoid circular dependency
+    export(srcRoot) {
+        // 各ノードに id をふり，各ノードは自分の親の id をダンプする
+        // id=0 は存在しないルートノードとなる
+        let id = 1;
+        let pathToID_Map = {};
+        /** @param {FileNode} src */
+        function traverse(src) {
+            let parent = src.parent ? pathToID_Map[src.parent.key] : 0;
+            process.stdout.write(`${id}\t${parent}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
+            pathToID_Map[src.key] = id;
+            id++;
             for (let i in src.children) {
-                dst.children[i] = src.children[i];
-                process(dst.children[i], src.children[i]);
+                traverse(src.children[i]);
             }
         }
 
-        let dstRoot = new FileNode();
-        process(dstRoot, srcRoot);
-
-        let exportData = {
-            absPath: path.resolve(pathRoot),
-            tree: dstRoot
-        }
-
-        return JSON.stringify(exportData, null, "\t");
+        traverse(srcRoot);
     }
 
-    import(srcRoot, finishCallback) {
-        /**
-         * @param {FileNode} dst 
-         * @param {FileNode} src 
-         */
-         function process(dst, src) {
-            dst.fileCount = src.fileCount;
-            dst.isDirectory = src.isDirectory;
-            dst.key = src.key;
-            dst.size = src.size;
-            for (let i in src.children) {
-                dst.children[i] = src.children[i];
-                dst.children[i].parent = dst;
-                process(dst.children[i], src.children[i]);
-            }
-        }
+    import(fileName, finishCallback) {
+        let rs = fs.createReadStream(fileName, {highWaterMark: 1024*64});
+        let rl = readline.createInterface({"input": rs});
 
-        let dstRoot = new FileNode();
-        process(dstRoot, srcRoot["tree"]);
-        finishCallback(dstRoot, srcRoot["absPath"]);
-        return;
+        // 各ノードに id をふり，各ノードは自分の親の id をダンプする
+        // id=0 は実際には存在しない仮のルートノードとなる
+        let idToNodeMap = {};
+        idToNodeMap[0] = new FileNode();
+        
+        rl.on("line", (line) => {
+            let node = new FileNode();
+
+            // process.stdout.write(`${id}\t${parent}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
+            let args = line.split(/\t/);
+            let id = Number(args[0]);
+            let parentID = Number(args[1]);
+
+            idToNodeMap[id] = node;
+            node.key = args[2];
+            node.isDirectory = Number(args[3]) == 1 ? true : false;
+            node.fileCount = Number(args[4])
+            node.size = Number(args[5]);
+            node.children = null;   // 子供がない場合は null に
+
+            // 親 -> 子の接続
+            if (parentID in idToNodeMap) {
+                let parentNode = idToNodeMap[parentID];
+                node.parent = parentNode;
+                if (!parentNode.children) {
+                    parentNode.children = {};
+                }
+                parentNode.children[node.key] = node;
+            }
+            else {
+                console.log(`Invalid parent id: ${parentID}`);
+            }
+        });
+        rl.on("close", () => {
+            // id=0 は実際には存在しないルートのノードなので，取り除く
+            let keys = Object.keys(idToNodeMap[0].children);
+            let root = idToNodeMap[0].children[keys[0]];
+            root.parent = null;
+            finishCallback(root, root.key);
+        });
     }
 };
 
@@ -251,7 +268,7 @@ class FileInfo {
 if (require.main === module) {
 
     let targetPath = process.argv[2];
-    //targetPath = "c:"
+    // targetPath = "./"
 
     if (!targetPath) {
         console.log(`Usage: node file_info.js <path_to_directory> > out.json`);
@@ -267,7 +284,8 @@ if (require.main === module) {
         fileInfo.getFileTree(
             path.resolve(targetPath), 
             (context, node) =>{ // finish
-                console.log(fileInfo.export(targetPath, node));
+                // console.log(fileInfo.export(targetPath, node));
+                fileInfo.export(node);
             },
             (context, path) => {    // progress
                 process.stderr.write(".");

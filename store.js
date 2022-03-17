@@ -1,6 +1,4 @@
 const {FileInfo} = require("./file_info.js");
-const fs = require("fs");
-const JSONStream = require("JSONStream");
 
 const ACTION = {
     TREE_LOAD: 1,
@@ -77,33 +75,14 @@ class Store {
             this.fileInfo_ = new FileInfo();
             this.trigger(CHANGE.TREE_RELEASED);
 
-            let stream = fs.createReadStream(fileName, { encoding: 'utf8' });
-            /** parse が一見互換がない型を返してくるので，握りつぶす
-             * @type {any} */
-            let parser = JSONStream.parse("$*");
-            stream.pipe(parser);    // 
-            parser.on("data",  (data) => {
-                //console.log(srcRoot);
-                if (data.key == "tree") {
-                    this.fileInfo_.import(
-                        {"tree": data.value}, 
-                        (tree, folderName) => {
-                            this.tree = tree;
-                            this.treeFolderName = folderName;
-                            this.trigger(CHANGE.TREE_LOADED, this);       
-                        }
-                    );
+            this.fileInfo_.import(
+                fileName, 
+                (tree, folderName) => { // finish handler
+                    this.tree = tree;
+                    this.treeFolderName = folderName;
+                    this.trigger(CHANGE.TREE_LOADED, this);       
                 }
-            });
-
-            // 組み込み機能を使用したバージョン
-            // let json = fs.readFileSync(fileName);
-            // let srcRoot = JSON.parse(json.toString());
-            // this.fileInfo_.import(srcRoot, (tree, folderName) => {
-            //     this.tree = tree;
-            //     this.treeFolderName = folderName;
-            //     this.trigger(CHANGE.TREE_LOADED, this);       
-            // });
+            );
         });
 
         this.on(ACTION.CANVAS_RESIZED, (width, height) => {
