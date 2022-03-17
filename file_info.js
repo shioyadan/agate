@@ -178,7 +178,7 @@ class FileInfo {
                     context.searching -= 1;
 
                     if (context.count % (1024*4) == 0) {
-                        context.progressCallback(context, filePath);
+                        context.progressCallback(context.count, filePath);
                     }
 
                     if (context.searching == 0 && context.searchingDir == 0){
@@ -186,7 +186,7 @@ class FileInfo {
                         // JSON にシリアライズしておくる
                         //context.callback(context, JSON.stringify(context.tree));
 
-                        context.finishCallback(context, context.tree);
+                        context.finishCallback(context.count, context.tree);
                     }
                 });
             });

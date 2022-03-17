@@ -30,10 +30,6 @@ class Store {
         this.handlers_ = {};
 
         this.tree = null;
-        this.treeFolderName = "";
-        this.treeLoadState = null;
-        this.treeCurrentLoadingFileName = "";
-
         this.width = 0;
         this.height = 0;
 
@@ -45,42 +41,38 @@ class Store {
         this.isSizeMode = true;
 
         this.on(ACTION.TREE_LOAD, (folderName) => {
-            this.treeFolderName = folderName;
-
             this.fileInfo_.Cancel();
             this.fileInfo_ = new FileInfo();
             this.trigger(CHANGE.TREE_RELEASED);
 
             this.fileInfo_.getFileTree(
                 folderName,
-                (state, tree) => {
+                (count, tree) => {
                     // 読み込み終了
                     this.tree = tree;
-                    this.treeLoadState = state;
-                    this.trigger(CHANGE.TREE_LOADED, this);       
+                    this.trigger(CHANGE.TREE_LOADED, this, count, folderName);       
                 },
-                (state, filePath)  => {
+                (count, filePath)  => {
                     // 読み込み状態の更新
-                    this.treeLoadState = state;
-                    this.treeCurrentLoadingFileName = filePath;
-                    this.trigger(CHANGE.TREE_LOADING, this);       
+                    this.trigger(CHANGE.TREE_LOADING, this, count, filePath);       
                 }
             );
         });
 
         this.on(ACTION.TREE_IMPORT, (fileName) => {
-            this.treeFolderName = "";//folderName;
-
             this.fileInfo_.Cancel();
             this.fileInfo_ = new FileInfo();
             this.trigger(CHANGE.TREE_RELEASED);
 
             this.fileInfo_.import(
                 fileName, 
-                (tree, folderName) => { // finish handler
+                (count, tree) => { // finish handler
                     this.tree = tree;
-                    this.treeFolderName = folderName;
-                    this.trigger(CHANGE.TREE_LOADED, this);       
+                    this.trigger(CHANGE.TREE_LOADED, this, count, fileName);       
+                },
+                (count, filePath)  => {
+                    // 読み込み状態の更新
+                    this.trigger(CHANGE.TREE_LOADING, this, count, filePath);       
                 }
             );
         });
