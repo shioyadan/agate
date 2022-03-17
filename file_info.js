@@ -14,6 +14,7 @@ class FileNode {
         this.size = 0;
         this.fileCount = 1;
         this.isDirectory = false;
+        this.id = -1;
     }
 }
 
@@ -33,6 +34,11 @@ class FileContext {
 class FileInfo {
     constructor() {
         this.canceled = false;
+        this.nextID_ = 1;
+    }
+
+    get nextID() {
+        return this.nextID_;
     }
 
     // キャンセル
@@ -75,12 +81,21 @@ class FileInfo {
      * @param {string} path 
      * @param {function(FileContext, FileNode): void} finishCallback 
      * @param {function(FileContext, string): void} progressCallback 
+     * @param {function(FileNode, FileNode): void?} connectionHook
      */
-    getFileTree(path, finishCallback, progressCallback) {
+    getFileTree(path, finishCallback, progressCallback, connectionHook=null) {
 
         let node = new FileNode;
         node.key = path;
         node.isDirectory = true;
+        node.id = this.nextID_;
+        this.nextID_++;
+        if (connectionHook) {
+            connectionHook(null, node)
+        }
+        else {
+            node.parent = null;
+        }
 
         let context = new FileContext;
         context.progressCallback = progressCallback;
@@ -94,7 +109,7 @@ class FileInfo {
             // 呼び出し元に返す
             finishCallback(finishContext, tree);
         },
-        this.getFileTreeBody_(path, context, context.tree);
+        this.getFileTreeBody_(path, context, context.tree, connectionHook);
 
     };
         
@@ -104,8 +119,9 @@ class FileInfo {
      * @param {string} path 
      * @param {FileContext} context 
      * @param {FileNode} parent 
+     * @param {function(FileNode, FileNode): void} connectionHook
      */
-    getFileTreeBody_(path, context, parent) {
+    getFileTreeBody_(path, context, parent, connectionHook) {
         let self = this;
         context.callCount += 1;
 
@@ -135,7 +151,7 @@ class FileInfo {
         }*/
 
 
-        fs.readdir(path, function(err, files){
+        fs.readdir(path, (err, files) => {
             // エラーでも探索対象に入っているので
             // 探索済みにカウントする必要がある
             context.searchingDir -= 1;
@@ -147,10 +163,10 @@ class FileInfo {
             
             context.searching += files.length;
 
-            files.forEach(function(pathElement){
+            files.forEach((pathElement) => {
                 let filePath = path + "/" + pathElement;
 
-                fs.lstat(filePath, function(err, stat){
+                fs.lstat(filePath, (err, stat) => {
 
                     if (err) {
                         //console.log(err);
@@ -158,18 +174,26 @@ class FileInfo {
                     else{
                         // ファイル情報ノード作成
                         let node = new FileNode;
+                        node.id = this.nextID_;
+                        this.nextID_++;
+
                         node.size = stat.size;
                         node.isDirectory = stat.isDirectory();
-                        node.children = null;
-                        node.parent = parent;
                         node.key = pathElement;
+                        node.children = (stat.isDirectory() && !stat.isSymbolicLink()) ? {} : null;
 
-                        parent.children[pathElement] = node;
-                        if (stat.isDirectory() && !stat.isSymbolicLink()) {
-                            node.children = {};
+                        if (connectionHook) {
+                            connectionHook(parent, node)
+                        }
+                        else {
+                            parent.children[pathElement] = node;
+                            node.parent = parent;
+                        }
+
+                        if (node.children) {
                             context.searchingDir++;
                             self.getFileTreeBody_(
-                                filePath, context, node
+                                filePath, context, node, connectionHook
                             );
                         }
                     }
@@ -195,27 +219,31 @@ class FileInfo {
     };
 
     /**
+     * @param {FileNode} parent 
+     * @param {FileNode} node 
+     */
+    encode(parent, node) {
+        return `${node.id}\t${parent ? parent.id : 0}\t${node.key}\t${node.isDirectory?1:0}\t${node.fileCount}\t${node.size}\n`;
+    }
+ 
+    /**
      * タブ区切りテキストにノードの情報をダンプしていく
      * @param {FileNode} srcRoot 
      */
     export(srcRoot) {
         // 各ノードに id をふり，各ノードは自分の親の id をダンプする
         // id=0 は存在しないルートノードとなる
-        let nextID = 1;
-        /** @param {FileNode} src */
-        function traverse(src, parentID) {
-            let nodeID = nextID;
-            process.stdout.write(`${nodeID}\t${parentID}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
-            nextID++;
-            for (let i in src.children) {
-                traverse(src.children[i], nodeID);
+        /** @param {FileNode} node */
+        function traverse(node) {
+            process.stdout.write(this.encode(node.parent, node));
+            for (let i in node.children) {
+                traverse(node.children[i]);
             }
         }
-
-        traverse(srcRoot, 0);
+        traverse(srcRoot);
     }
 
-    import(fileName, finishCallback) {
+    import(fileName, finishCallback, progressCallback) {
         let rs = fs.createReadStream(fileName, {highWaterMark: 1024*64});
         let rl = readline.createInterface({"input": rs});
 
@@ -223,6 +251,8 @@ class FileInfo {
         // id=0 は実際には存在しない仮のルートノードとなる
         let idToNodeMap = {};
         idToNodeMap[0] = new FileNode();
+
+        let lineNum = 1;
         
         rl.on("line", (line) => {
             let node = new FileNode();
@@ -251,13 +281,22 @@ class FileInfo {
             else {
                 console.log(`Invalid parent id: ${parentID}`);
             }
+
+            if (lineNum % (1024 * 128) == 0) {
+                progressCallback(lineNum, node.key);
+            }
+            lineNum++;
         });
         rl.on("close", () => {
             // id=0 は実際には存在しないルートのノードなので，取り除く
             let keys = Object.keys(idToNodeMap[0].children);
             let root = idToNodeMap[0].children[keys[0]];
             root.parent = null;
-            finishCallback(root, root.key);
+
+            root.size = this.updateDirectorySize_(root);
+            root.fileCount = this.updateDirectoryFileCount_(root);
+
+            finishCallback(lineNum, root);
         });
     }
 };
@@ -283,10 +322,14 @@ if (require.main === module) {
             path.resolve(targetPath), 
             (context, node) =>{ // finish
                 // console.log(fileInfo.export(targetPath, node));
-                fileInfo.export(node);
+                //fileInfo.export(node);
+                console.log(`finished (lastID:${fileInfo.nextID-1})`);
             },
             (context, path) => {    // progress
                 process.stderr.write(".");
+            },
+            (parent, node) => {
+                process.stdout.write(fileInfo.encode(parent, node));
             }
         );
     }
