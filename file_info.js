@@ -201,20 +201,18 @@ class FileInfo {
     export(srcRoot) {
         // 各ノードに id をふり，各ノードは自分の親の id をダンプする
         // id=0 は存在しないルートノードとなる
-        let id = 1;
-        let pathToID_Map = {};
+        let nextID = 1;
         /** @param {FileNode} src */
-        function traverse(src) {
-            let parent = src.parent ? pathToID_Map[src.parent.key] : 0;
-            process.stdout.write(`${id}\t${parent}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
-            pathToID_Map[src.key] = id;
-            id++;
+        function traverse(src, parentID) {
+            let nodeID = nextID;
+            process.stdout.write(`${nodeID}\t${parentID}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
+            nextID++;
             for (let i in src.children) {
-                traverse(src.children[i]);
+                traverse(src.children[i], nodeID);
             }
         }
 
-        traverse(srcRoot);
+        traverse(srcRoot, 0);
     }
 
     import(fileName, finishCallback) {
