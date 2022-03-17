@@ -2,7 +2,7 @@
 let fs = require("fs");
 let path = require("path");
 let readline = require("readline");
-
+let zlib = require("zlib");
 
 class FileNode {
     constructor() {
@@ -258,7 +258,15 @@ class FileInfo {
 
     import(fileName, finishCallback, progressCallback) {
         let rs = fs.createReadStream(fileName, {highWaterMark: 1024*64});
-        let rl = readline.createInterface({"input": rs});
+        let rl;
+
+        if (path.extname(fileName) == ".gz") {
+            let gzipRS = rs.pipe(zlib.createGunzip({chunkSize: 1024*32}));
+            rl = readline.createInterface({"input": gzipRS});
+        }
+        else {
+            rl = readline.createInterface({"input": rs});
+        }
 
         // 各ノードに id をふり，各ノードは自分の親の id をダンプする
         // id=0 は実際には存在しない仮のルートノードとなる
