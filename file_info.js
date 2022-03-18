@@ -23,8 +23,13 @@ class FileContext {
         this.count = 0;
         this.finishCallback = null;
         this.progressCallback = null;
-        this.searching = 0;
-        this.searchingDir = 1;
+        
+        this.searchingFileNum = 0;
+        this.searchingDirNum = 1;
+        this.runningReadDirNum = 0;
+        this.runningLstatNum = 0;
+        this.sleepNum = 0;
+
         /** @type {FileNode} */
         this.tree = null;
         this.callCount = 0;
@@ -112,7 +117,30 @@ class FileInfo {
         this.getFileTreeBody_(path, context, context.tree, connectionHook);
 
     };
-        
+
+    /** 現在の lstat 実行数に応じて sleep した後に handler を呼ぶ
+     * @param {FileContext} context 
+     * @param {function} handler 
+     */
+    throttlingExecution_(context, handler) {
+        let count = 0;
+        context.sleepNum++;
+        function process() {
+            if (context.runningLstatNum < 10000) {
+                context.sleepNum--;
+                handler();
+            }
+            else {
+                // Exponential back off + jitter
+                let sleep = 100 + Math.random() * 200 * Math.pow(2, count);
+                sleep = sleep > 2000 ? 2000 : sleep;
+                count++;
+                setTimeout(() => {process()}, sleep);
+            }
+        }
+        process();
+    }
+
     // getFileTree の実装
     // main プロセスで実行
     /**
@@ -129,105 +157,83 @@ class FileInfo {
             return;
         }
 
-        /*
-        if (context.callCount % (1024) == 0) {
-            console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
-        }
-        */
-        /*
-        if (context.callCount > 16) {
-            if  (context.searching == 0) {
-                context.callCount = 0;
-            }
-            else{
-                setTimeout(
-                    function() {
-                        fileInfo.getFileTreeOnMainBody(path, context, parent);
-                    },
-                    100
-                );
-                return;
-            }
-        }*/
-
-
+        context.runningReadDirNum++;
         fs.readdir(path, (err, files) => {
+            context.runningReadDirNum--;
             // エラーでも探索対象に入っているので
             // 探索済みにカウントする必要がある
-            context.searchingDir -= 1;
+            context.searchingDirNum -= 1;
 
             if (err) {
                 //console.log(err);
                 return;
             }
-            
-            context.searching += files.length;
 
-            files.forEach((pathElement) => {
-                let filePath = path + "/" + pathElement;
+            // 処理を終わらせないために，残り探索対象数は判明次第直ちに足す必要がある
+            context.searchingFileNum += files.length;
 
-                fs.lstat(filePath, (err, stat) => {
+            // メモリ使用量を抑えるため，lstat 起動数が多すぎる場合はここでスリープさせる
+            this.throttlingExecution_(context, () => {  
 
-                    if (err) {
-                        //console.log(err);
-                    }
-                    else{
-                        // ファイル情報ノード作成
-                        let node = new FileNode;
-                        node.id = this.nextID_;
-                        this.nextID_++;
+                files.forEach((pathElement) => {
+                    let filePath = path + "/" + pathElement;
+                    // メモリ使用量を抑えるため，lstat 起動数が多すぎる場合はここでスリープさせる
+                    this.throttlingExecution_(context, () => {
 
-                        node.size = stat.size;
-                        node.isDirectory = stat.isDirectory();
-                        node.key = pathElement;
-                        node.children = (stat.isDirectory() && !stat.isSymbolicLink()) ? {} : null;
+                        context.runningLstatNum++;
+                        fs.lstat(filePath, (err, stat) => {
+                            context.runningLstatNum--;
 
-                        if (connectionHook) {
-                            connectionHook(parent, node)
-                        }
-                        else {
-                            parent.children[pathElement] = node;
-                            node.parent = parent;
-                        }
+                            if (err) {
+                                //console.log(err);
+                            }
+                            else{
+                                // ファイル情報ノード作成
+                                let node = new FileNode;
+                                node.id = this.nextID_;
+                                this.nextID_++;
 
-                        if (node.children) {
-                            context.searchingDir++;
-                            if (context.searching > 1000) {
-                                function process(sleep) {
-                                    if (context.searching < 1000) {
-                                        self.getFileTreeBody_(filePath, context, node, connectionHook);
-                                    }
-                                    else {
-                                        sleep = sleep > 1000 ? 1000 : sleep;
-                                        setTimeout(() => {process(sleep*2)}, sleep);
-                                    }
+                                node.size = stat.size;
+                                node.isDirectory = stat.isDirectory();
+                                node.key = pathElement;
+                                node.children = (stat.isDirectory() && !stat.isSymbolicLink()) ? {} : null;
+
+                                if (connectionHook) {
+                                    connectionHook(parent, node)
                                 }
-                                process(100);
+                                else {
+                                    parent.children[pathElement] = node;
+                                    node.parent = parent;
+                                }
+
+                                if (node.children) {
+                                    // 処理を終わらせないために，残り探索対象数は判明次第直ちに足す必要がある
+                                    context.searchingDirNum++;
+                                    self.getFileTreeBody_(filePath, context, node, connectionHook);
+                                }
                             }
-                            else {
-                                self.getFileTreeBody_(filePath, context, node, connectionHook);
+
+                            context.count++;
+                            context.searchingFileNum -= 1;
+
+                            // 残り探索対象がなくなったので終了する
+                            if (context.searchingFileNum == 0 && context.searchingDirNum == 0){
+                                // Electron のリモート呼び出しは浅いコピーしかしないので
+                                // JSON にシリアライズしておくる
+                                //context.callback(context, JSON.stringify(context.tree));
+
+                                context.finishCallback(context.count, context.tree);
                             }
-                        }
-                    }
 
-                    context.count++;
-                    context.searching -= 1;
-
-                    if (context.count % (1024*4) == 0) {
-                        context.progressCallback(context.count, filePath);
-                        //process.stderr.write(`[${context.searching},${context.searchingDir},${filePath}]`);
-                    }
-
-                    if (context.searching == 0 && context.searchingDir == 0){
-                        // Electron のリモート呼び出しは浅いコピーしかしないので
-                        // JSON にシリアライズしておくる
-                        //context.callback(context, JSON.stringify(context.tree));
-
-                        context.finishCallback(context.count, context.tree);
-                    }
+                            // 現在の状態の更新
+                            if (context.count % (1024*4) == 0) {
+                                context.progressCallback(context.count, filePath);
+                                process.stderr.write(`[files:${context.searchingFileNum},dirs:${context.searchingDirNum},rddir:${context.runningReadDirNum},lstat:${context.runningLstatNum},sleep:${context.sleepNum},${path}]\n`);
+                            }
+                        });
+                    });
                 });
             });
-
         });
     };
 
