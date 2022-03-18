@@ -30,6 +30,7 @@ class TreeMap {
         /** @type {Object<string,TreeMapCacheEntry>} */
         this.treeMapCache_ = {}; // ファイルパスから分割情報へのキャッシュ
         this.areas_ = null; // 生成済み領域情報
+        this.root_ = null;
     }
 
     /**
@@ -263,6 +264,7 @@ class TreeMap {
         fileNode, virtWidth, virtHeight, viewPort, margin, isSizeMode
     ) {
         let self = this;
+        self.root_ = fileNode;
         
         // モードが変わった際はキャッシュを破棄
         if (this.cachedSizeMode != isSizeMode){
@@ -368,6 +370,10 @@ class TreeMap {
             }
         }
 
+        // 範囲外だった場合は ROOT を返す
+        if (!fileNode) {
+            fileNode = this.root_;
+        }
         return fileNode;
     };
 
