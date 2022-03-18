@@ -47,14 +47,14 @@ class Store {
 
             this.fileInfo_.getFileTree(
                 folderName,
-                (count, tree) => {
+                (context, tree) => {
                     // 読み込み終了
                     this.tree = tree;
-                    this.trigger(CHANGE.TREE_LOADED, this, count, folderName);       
+                    this.trigger(CHANGE.TREE_LOADED, this, context, folderName);       
                 },
-                (count, filePath)  => {
+                (context, filePath)  => {
                     // 読み込み状態の更新
-                    this.trigger(CHANGE.TREE_LOADING, this, count, filePath);       
+                    this.trigger(CHANGE.TREE_LOADING, this, context, filePath);       
                 },
                 null
             );
@@ -67,13 +67,13 @@ class Store {
 
             this.fileInfo_.import(
                 fileName, 
-                (count, tree) => { // finish handler
+                (context, tree) => { // finish handler
                     this.tree = tree;
-                    this.trigger(CHANGE.TREE_LOADED, this, count, fileName);       
+                    this.trigger(CHANGE.TREE_LOADED, this, context, fileName);       
                 },
-                (count, filePath)  => {
+                (context, filePath)  => {
                     // 読み込み状態の更新
-                    this.trigger(CHANGE.TREE_LOADING, this, count, filePath);       
+                    this.trigger(CHANGE.TREE_LOADING, this, context, filePath);       
                 }
             );
         });

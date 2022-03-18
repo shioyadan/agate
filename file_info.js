@@ -21,13 +21,24 @@ class FileNode {
 class FileContext {
     constructor() {
         this.count = 0;
+
+        /** @type {function(FileContext, FileNode): void} */
         this.finishCallback = null;
+
+        /** @type {function(FileContext, string): void} */
         this.progressCallback = null;
-        this.searching = 0;
-        this.searchingDir = 1;
+        
+        this.searchingFileNum = 0;
+        this.searchingDirNum = 1;
+        this.runningReadDirNum = 0;
+        this.runningLstatNum = 0;
+        this.sleepNum = 0;
+
         /** @type {FileNode} */
         this.tree = null;
         this.callCount = 0;
+
+        this.mode = "";
     }
 }
 
@@ -48,30 +59,28 @@ class FileInfo {
 
     // tree で渡されてくるツリーにおいて，
     // 各ディレクトリが含む合計サイズを計算して適用する
-    /** @param {FileNode} tree */
-    updateDirectorySize_(tree) {
-        let size = 0;
-        for(let key in tree.children) {
-            let val = tree.children[key];
-            if (val.isDirectory && val.children) {
-                val.size = this.updateDirectorySize_(val);
-            }
-            size += val.size;
+    /**
+     * @param {FileContext} context
+     * @param {FileNode} tree 
+     * */
+    finalizeTree_(context, tree) {
+        if (context.count % (1024*4) == 0) {
+            context.progressCallback(context, tree.key);
         }
-        return size;
-    };
+        context.count += 1;
 
-    /** @param {FileNode} tree */
-    updateDirectoryFileCount_(tree) {
-        let fileCount = 0;
+        let sizeAndCount = [0,0];
         for(let key in tree.children) {
             let val = tree.children[key];
             if (val.isDirectory && val.children) {
-                val.fileCount = this.updateDirectoryFileCount_(val);
+                let child = this.finalizeTree_(context, val);
+                val.size = child[0];
+                val.fileCount = child[1];
             }
-            fileCount += val.fileCount;
+            sizeAndCount[0] += val.size;
+            sizeAndCount[1] += val.fileCount;
         }
-        return fileCount;
+        return sizeAndCount;
     };
 
     // path により指定したフォルダ以下のファイルツリーを取得
@@ -98,13 +107,17 @@ class FileInfo {
         }
 
         let context = new FileContext;
+        context.mode = "get";
         context.progressCallback = progressCallback;
         context.tree = node;
 
         context.finishCallback = (finishContext, tree) => {
             // 各ディレクトリのサイズ反映
-            tree.size = this.updateDirectorySize_(tree);
-            tree.fileCount = this.updateDirectoryFileCount_(tree);
+            context.mode = "finalize";
+            context.count = 0;
+            let sizeAndCount = this.finalizeTree_(context, tree);
+            tree.size = sizeAndCount[0];
+            tree.fileCount = sizeAndCount[1];
 
             // 呼び出し元に返す
             finishCallback(finishContext, tree);
@@ -112,7 +125,30 @@ class FileInfo {
         this.getFileTreeBody_(path, context, context.tree, connectionHook);
 
     };
-        
+
+    /** 現在の lstat 実行数に応じて sleep した後に handler を呼ぶ
+     * @param {FileContext} context 
+     * @param {function} handler 
+     */
+    throttlingExecution_(context, handler) {
+        let count = 0;
+        context.sleepNum++;
+        function process() {
+            if (context.runningLstatNum < 10000) {
+                context.sleepNum--;
+                handler();
+            }
+            else {
+                // Exponential back off + jitter
+                let sleep = 100 + Math.random() * 200 * Math.pow(2, count);
+                sleep = sleep > 2000 ? 2000 : sleep;
+                count++;
+                setTimeout(() => {process()}, sleep);
+            }
+        }
+        process();
+    }
+
     // getFileTree の実装
     // main プロセスで実行
     /**
@@ -129,105 +165,83 @@ class FileInfo {
             return;
         }
 
-        /*
-        if (context.callCount % (1024) == 0) {
-            console.log("" + context.count + "," + context.searchingDir + "," + context.searching);
-        }
-        */
-        /*
-        if (context.callCount > 16) {
-            if  (context.searching == 0) {
-                context.callCount = 0;
-            }
-            else{
-                setTimeout(
-                    function() {
-                        fileInfo.getFileTreeOnMainBody(path, context, parent);
-                    },
-                    100
-                );
-                return;
-            }
-        }*/
-
-
+        context.runningReadDirNum++;
         fs.readdir(path, (err, files) => {
+            context.runningReadDirNum--;
             // エラーでも探索対象に入っているので
             // 探索済みにカウントする必要がある
-            context.searchingDir -= 1;
+            context.searchingDirNum -= 1;
 
             if (err) {
                 //console.log(err);
                 return;
             }
-            
-            context.searching += files.length;
 
-            files.forEach((pathElement) => {
-                let filePath = path + "/" + pathElement;
+            // 処理を終わらせないために，残り探索対象数は判明次第直ちに足す必要がある
+            context.searchingFileNum += files.length;
 
-                fs.lstat(filePath, (err, stat) => {
+            // メモリ使用量を抑えるため，lstat 起動数が多すぎる場合はここでスリープさせる
+            this.throttlingExecution_(context, () => {  
 
-                    if (err) {
-                        //console.log(err);
-                    }
-                    else{
-                        // ファイル情報ノード作成
-                        let node = new FileNode;
-                        node.id = this.nextID_;
-                        this.nextID_++;
+                files.forEach((pathElement) => {
+                    let filePath = path + "/" + pathElement;
+                    // メモリ使用量を抑えるため，lstat 起動数が多すぎる場合はここでスリープさせる
+                    this.throttlingExecution_(context, () => {
 
-                        node.size = stat.size;
-                        node.isDirectory = stat.isDirectory();
-                        node.key = pathElement;
-                        node.children = (stat.isDirectory() && !stat.isSymbolicLink()) ? {} : null;
+                        context.runningLstatNum++;
+                        fs.lstat(filePath, (err, stat) => {
+                            context.runningLstatNum--;
 
-                        if (connectionHook) {
-                            connectionHook(parent, node)
-                        }
-                        else {
-                            parent.children[pathElement] = node;
-                            node.parent = parent;
-                        }
+                            if (err) {
+                                //console.log(err);
+                            }
+                            else{
+                                // ファイル情報ノード作成
+                                let node = new FileNode;
+                                node.id = this.nextID_;
+                                this.nextID_++;
 
-                        if (node.children) {
-                            context.searchingDir++;
-                            if (context.searching > 1000) {
-                                function process(sleep) {
-                                    if (context.searching < 1000) {
-                                        self.getFileTreeBody_(filePath, context, node, connectionHook);
-                                    }
-                                    else {
-                                        sleep = sleep > 1000 ? 1000 : sleep;
-                                        setTimeout(() => {process(sleep*2)}, sleep);
-                                    }
+                                node.size = stat.size;
+                                node.isDirectory = stat.isDirectory();
+                                node.key = pathElement;
+                                node.children = (stat.isDirectory() && !stat.isSymbolicLink()) ? {} : null;
+
+                                if (connectionHook) {
+                                    connectionHook(parent, node)
                                 }
-                                process(100);
+                                else {
+                                    parent.children[pathElement] = node;
+                                    node.parent = parent;
+                                }
+
+                                if (node.children) {
+                                    // 処理を終わらせないために，残り探索対象数は判明次第直ちに足す必要がある
+                                    context.searchingDirNum++;
+                                    self.getFileTreeBody_(filePath, context, node, connectionHook);
+                                }
                             }
-                            else {
-                                self.getFileTreeBody_(filePath, context, node, connectionHook);
+
+                            context.count++;
+                            context.searchingFileNum -= 1;
+
+                            // 残り探索対象がなくなったので終了する
+                            if (context.searchingFileNum == 0 && context.searchingDirNum == 0){
+                                // Electron のリモート呼び出しは浅いコピーしかしないので
+                                // JSON にシリアライズしておくる
+                                //context.callback(context, JSON.stringify(context.tree));
+
+                                context.finishCallback(context, context.tree);
                             }
-                        }
-                    }
 
-                    context.count++;
-                    context.searching -= 1;
-
-                    if (context.count % (1024*4) == 0) {
-                        context.progressCallback(context.count, filePath);
-                        //process.stderr.write(`[${context.searching},${context.searchingDir},${filePath}]`);
-                    }
-
-                    if (context.searching == 0 && context.searchingDir == 0){
-                        // Electron のリモート呼び出しは浅いコピーしかしないので
-                        // JSON にシリアライズしておくる
-                        //context.callback(context, JSON.stringify(context.tree));
-
-                        context.finishCallback(context.count, context.tree);
-                    }
+                            // 現在の状態の更新
+                            if (context.count % (1024*4) == 0) {
+                                context.progressCallback(context, filePath);
+                                //process.stderr.write(`[files:${context.searchingFileNum},dirs:${context.searchingDirNum},rddir:${context.runningReadDirNum},lstat:${context.runningLstatNum},sleep:${context.sleepNum},${path}]\n`);
+                            }
+                        });
+                    });
                 });
             });
-
         });
     };
 
@@ -274,6 +288,9 @@ class FileInfo {
         idToNodeMap[0] = new FileNode();
 
         let lineNum = 1;
+        let context = new FileContext;
+        context.mode = "import";
+        context.progressCallback = progressCallback;
         
         rl.on("line", (line) => {
             let node = new FileNode();
@@ -304,7 +321,8 @@ class FileInfo {
             }
 
             if (lineNum % (1024 * 128) == 0) {
-                progressCallback(lineNum, node.key);
+                context.count = lineNum;
+                progressCallback(context, node.key);
             }
             lineNum++;
         });
@@ -314,8 +332,14 @@ class FileInfo {
             let root = idToNodeMap[0].children[keys[0]];
             root.parent = null;
 
-            root.size = this.updateDirectorySize_(root);
-            root.fileCount = this.updateDirectoryFileCount_(root);
+            let context = new FileContext();
+            context.progressCallback = progressCallback;
+            context.mode = "finalize";
+            context.count = 0;
+
+            let sizeAndCount = this.finalizeTree_(context, root);
+            root.size = sizeAndCount[0];
+            root.fileCount = sizeAndCount[1];
 
             finishCallback(lineNum, root);
         });
@@ -358,5 +382,6 @@ if (require.main === module) {
 else {
     module.exports.FileInfo = FileInfo;
     module.exports.FileNode = FileNode;
+    module.exports.FileContext = FileContext;
 }
 
