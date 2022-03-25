@@ -297,6 +297,11 @@ class FileInfo {
 
             // process.stdout.write(`${id}\t${parent}\t${src.key}\t${src.isDirectory?1:0}\t${src.fileCount}\t${src.size}\n`);
             let args = line.split(/\t/);
+            if (args.length != 6) {
+                console.log(`invalid line: ${line}`);
+                return;
+            }
+
             let id = Number(args[0]);
             let parentID = Number(args[1]);
 
