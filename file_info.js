@@ -339,14 +339,20 @@ class FileInfo {
 
             let context = new FileContext();
             context.progressCallback = progressCallback;
-            context.mode = "finalize";
+            context.mode = "parsed";
             context.count = 0;
+            progressCallback(context, root.key);
 
-            let sizeAndCount = this.finalizeTree_(context, root);
-            root.size = sizeAndCount[0];
-            root.fileCount = sizeAndCount[1];
-
-            finishCallback(lineNum, root);
+            setTimeout(() => {
+                let sizeAndCount = this.finalizeTree_(context, root);
+                root.size = sizeAndCount[0];
+                root.fileCount = sizeAndCount[1];
+    
+                context.mode = "finalize";
+                context.count = root.fileCount;
+                progressCallback(context, root.key);
+                finishCallback(lineNum, root);
+            }, 0);
         });
     }
 };

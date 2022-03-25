@@ -224,6 +224,9 @@
                 "" + context.count + " files have been read. " + 
                 "Reading \"" + fileName + "\".";
             }
+            else if (context.mode == "parsed") {
+                self.statusBarMessage = "Now finalizing. It may take a few minutes...";
+            }
             else if (context.mode == "finalize") {
                 self.statusBarMessage = 
                 "" + context.count + " nodes have been finalized. " + 
