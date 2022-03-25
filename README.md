@@ -16,11 +16,13 @@
 
 ## コマンドライン実行によるファイルのスキャン
 
-* GUI を起動するのが難しい場合，node.js で file_info.js を実行してスキャン結果をダンプし，それを読み込むことが出来る
-*  以下のようにして生成したダンプ（gzip 推奨）を，GUI の "Import a file" より読み込む
+* GUI を起動するのが難しい場合，node.js で file_info.js を実行してスキャン結果をダンプし，それを読み込むことが出来ます
+*  以下のようにして生成したダンプ（gzip 推奨）を，GUI の "Import a file" より読み込みます
     ```
     node file_info.js <スキャン対象のパス> | gzip > out.log
     ```
+* node.js については apt/yum で入れても良いが，root になれない場合などは node のバイナリのアーカイブをダウンロードしてきて展開し，直接実行しても動きます
+
 ## 開発
 
     # Install node.js/npm
