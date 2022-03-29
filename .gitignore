@@ -1,4 +1,5 @@
 *.log
+*.log.gz
 packaging-work
 work
 node_modules
