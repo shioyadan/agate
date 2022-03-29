@@ -14,6 +14,9 @@ class TreeMapRenderer {
         this.treeMap_ = new TreeMap();
     }
 
+    clear() {
+        this.treeMap_.clear();
+    }
 
     getFileNodeFromPoint(pos) {
         return this.treeMap_.getFileNodeFromPoint(pos);

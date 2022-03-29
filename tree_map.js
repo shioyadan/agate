@@ -33,6 +33,12 @@ class TreeMap {
         this.root_ = null;
     }
 
+    clear() {
+        this.treeMapCache_ = {};
+        this.areas_ = null;
+        this.root_ = null;
+    }
+
     /**
      * @param {FileNode} fileNode
      * @returns {number}

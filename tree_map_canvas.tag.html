@@ -62,6 +62,10 @@
             self.update();
         };
 
+        self.clear = function() {
+            self.treeMapRenderer.clear();
+        }
+
         // マウスのイベントハンドラ
         // ダブルクリック
         self.onMouseDoubleClick = function(e){
@@ -248,6 +252,7 @@
         // ファイルツリー情報を解放
         store.on(store.CHANGE.TREE_RELEASED, function(){
             self.tree = null;
+            self.treeMapRenderer.clear();
             self.draw();
         });
 

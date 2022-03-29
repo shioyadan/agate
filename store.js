@@ -1,4 +1,4 @@
-const {FileInfo} = require("./file_info.js");
+const {FileInfo, FileNode} = require("./file_info.js");
 
 const ACTION = {
     TREE_LOAD: 1,
@@ -34,17 +34,30 @@ class Store {
         this.height = 0;
 
         this.pointedPath = "";
+
+        /** @type {FileNode} */
         this.pointedFileNode = null;
 
         this.fileInfo_ = new FileInfo();
 
         this.isSizeMode = true;
 
-        this.on(ACTION.TREE_LOAD, (folderName) => {
+        this.releaseContext = () => {
             this.fileInfo_.Cancel();
             this.fileInfo_ = new FileInfo();
-            this.trigger(CHANGE.TREE_RELEASED);
+            this.pointedFileNode = null;        // 参照が残るとリークする
+            this.tree = null;
+            this.trigger(CHANGE.TREE_RELEASED); // レンダラ側に残っている情報も解放
 
+            // GC を走らせておく
+            if (global.gc) {
+                console.log("Run GC");
+                global.gc();            
+            }
+        }
+
+        this.on(ACTION.TREE_LOAD, (folderName) => {
+            this.releaseContext();
             this.fileInfo_.getFileTree(
                 folderName,
                 (context, tree) => {
@@ -61,10 +74,7 @@ class Store {
         });
 
         this.on(ACTION.TREE_IMPORT, (fileName) => {
-            this.fileInfo_.Cancel();
-            this.fileInfo_ = new FileInfo();
-            this.trigger(CHANGE.TREE_RELEASED);
-
+            this.releaseContext();
             this.fileInfo_.import(
                 fileName, 
                 (context, tree) => { // finish handler
