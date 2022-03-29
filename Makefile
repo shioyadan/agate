@@ -31,3 +31,6 @@ clean:
 
 distclean: clean
 	rm node_modules -r -f
+
+build-file-info:
+	npx pkg --target -t node14-x64 file_info.js
