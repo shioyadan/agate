@@ -378,8 +378,8 @@ if (require.main === module) {
             path.resolve(targetPath), 
             (context, node) =>{ // finish
                 //fileInfo.export(node);
-                console.log(`finished (lastID:${fileInfo.nextID-1})`);
-                process.stderr.write("finished");
+                //console.log(`finished (lastID:${fileInfo.nextID-1})`);
+                process.stderr.write(`finished(lastID:${fileInfo.nextID-1})`);
             },
             (context, path) => {    // progress
                 process.stderr.write(".");
