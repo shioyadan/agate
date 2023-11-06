@@ -15,8 +15,17 @@ build: clean
 		--ignore work \
 		--ignore packaging-work \
 		--ignore .vscode \
+		--ignore .log \
+		--ignore .gz \
 		--asar \
 		--prune=true	# Exclude devDependencies
+	$(MAKE) build-file-info
+
+# pkg を使って file_info.js のバイナリを生成する
+build-file-info:
+	npx pkg -t node16-linux-x64 --out-path=packaging-work/agate-linux-x64 file_info.js
+	npx pkg -t node16-win-x64 --out-path=packaging-work/agate-win32-x64 file_info.js
+	npx pkg -t node16-macos-x64 --out-path=packaging-work/agate-darwin-x64 file_info.js
 
 # アーカイブに固める
 DOCUMENTS = README.md LICENSE.md THIRD-PARTY-LICENSES.md

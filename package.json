@@ -20,6 +20,7 @@
   "devDependencies": {
     "electron": "^27.0.3",
     "electron-packager": "^17.1.2",
-    "license-checker": "^25.0.1"
+    "license-checker": "^25.0.1",
+    "pkg": "^5.5.2"
   }
 }
