@@ -15,12 +15,11 @@
     "bootstrap": "^3.3.7",
     "jquery": "^3.3.1",
     "riot": "^3.13.2",
-    "@electron/remote": "^2.0.7"
+    "@electron/remote": "^2.0.12"
   },
   "devDependencies": {
-    "electron": "^17.1.2",
-    "electron-packager": "^15.0.0",
-    "license-checker": "^15.0.0",
-    "pkg": "^5.5.2"
+    "electron": "^27.0.3",
+    "electron-packager": "^17.1.2",
+    "license-checker": "^25.0.1"
   }
 }

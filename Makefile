@@ -1,5 +1,5 @@
 run:
-	npx electron --debug=5858 . 
+	npx electron . 
 
 init:
 	npm install
@@ -11,7 +11,7 @@ build: clean
 		--out=packaging-work \
 		--platform=darwin,win32,linux \
 		--arch=x64  \
-		--electron-version=17.1.2 \
+		--electron-version=27.0.3 \
 		--ignore work \
 		--ignore packaging-work \
 		--ignore .vscode \
@@ -32,5 +32,3 @@ clean:
 distclean: clean
 	rm node_modules -r -f
 
-build-file-info:
-	npx pkg --target -t node14-x64 file_info.js
