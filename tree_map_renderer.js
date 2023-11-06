@@ -105,7 +105,10 @@ class TreeMapRenderer {
         function fileNodeToStr(fileNode) {
             let str = "";
             let num = isSizeMode ? fileNode.size : fileNode.fileCount;
-            if (num > 1024*1024) {
+            if (num > 1024*1024*1024) {
+                str = "" + Math.ceil(num/1024/1024/1024) + "G";
+            }
+            else if (num > 1024*1024) {
                 str = "" + Math.ceil(num/1024/1024) + "M";
             }
             else if (num > 1024) {
