@@ -14,12 +14,13 @@ build: clean
 		--electron-version=27.0.3 \
 		--ignore work \
 		--ignore packaging-work \
-		--ignore .vscode \
-		--ignore .log \
-		--ignore .gz \
-		--asar \
+		--ignore "\\.vscode$$" \
+		--ignore "\\.log$$" \
+		--ignore "\\.gz$$" \
+		--asar  \
 		--prune=true	# Exclude devDependencies
 	$(MAKE) build-file-info
+
 
 # pkg を使って file_info.js のバイナリを生成する
 build-file-info:
