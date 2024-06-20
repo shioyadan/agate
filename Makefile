@@ -28,6 +28,10 @@ build-file-info:
 	npx pkg -t node16-win-x64 --out-path=packaging-work/agate-win32-x64 file_info.js
 	npx pkg -t node16-macos-x64 --out-path=packaging-work/agate-darwin-x64 file_info.js
 
+# home の全情報をコマンドラインから取る
+run-file-info:
+	nodejs --max-old-space-size=8192 file_info.js /home | gzip > home-all.$(shell date +%Y%m%d).log.gz
+
 # アーカイブに固める
 DOCUMENTS = README.md LICENSE.md THIRD-PARTY-LICENSES.md
 pack: build
