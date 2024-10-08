@@ -10,6 +10,7 @@ const ACTION = {
     CANVAS_ZOOM_IN: 7,
     CANVAS_ZOOM_OUT: 8,
     MODE_CHANGE: 9,
+    FIT_TO_CANVAS: 10,
 };
 
 const CHANGE = {
@@ -22,6 +23,7 @@ const CHANGE = {
     CANVAS_ZOOM_IN: 106,
     CANVAS_ZOOM_OUT: 107,
     CANVAS_POINTER_CHANGED: 108,
+    FIT_TO_CANVAS: 109,
 };
 
 
@@ -103,6 +105,7 @@ class Store {
         this.on(ACTION.FILE_IMPORT, () => {this.trigger(CHANGE.FILE_IMPORT);});
         this.on(ACTION.CANVAS_ZOOM_IN, () => {this.trigger(CHANGE.CANVAS_ZOOM_IN);});
         this.on(ACTION.CANVAS_ZOOM_OUT, () => {this.trigger(CHANGE.CANVAS_ZOOM_OUT);});
+        this.on(ACTION.FIT_TO_CANVAS, () => {this.trigger(CHANGE.FIT_TO_CANVAS);});
 
         this.on(ACTION.MODE_CHANGE, (isSizeMode) => {
             this.isSizeMode = isSizeMode;
