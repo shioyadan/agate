@@ -9,7 +9,7 @@
 
         // タイルマップの初期解像度
         // タイルマップ自体が拡大縮小され，それをビューポート経由で覗いてる構造になる
-        // マウント時に，そのサイズで初期化される
+        // ファイル読み込み時に，そのサイズで初期化される
         self.BASE_SIZE = [0, 0];    
 
         let ZOOM_RATIO = 0.8;   // 一回に拡大縮小する率 (2^ZOOM_RATIO)
@@ -47,22 +47,8 @@
         // 初期化
         // タグのマウント時に呼ばれるようにする
         self.init = function(){
+
             let canvas = self.refs.canvas;
-
-            self.BASE_SIZE = [canvas.height*16/9, canvas.height];
-
-            let navbar = document.getElementById("id_app_navbar");
-            let navbarHeight = navbar ? navbar.offsetHeight : 0;
-            let statusBar = document.getElementById("id_status_bar");
-            let statusBarHeight = statusBar ? statusBar.offsetHeight : 0;
-
-            // 初期座標を中央に設定（マイナス値）
-            self.viewPoint = [
-                -(document.body.offsetWidth - self.BASE_SIZE[0])/2,
-                -(document.body.offsetHeight -
-                  navbarHeight - statusBarHeight -
-                  self.BASE_SIZE[1]) / 2
-            ];
 
             canvas.ondblclick = self.onMouseDoubleClick;
             canvas.onmousewheel = self.onMouseWheel;
@@ -115,9 +101,7 @@
                 //console.log(key);
             };
 
-
-
-            // 背景を更新
+            // タグの描画をかけて，canvas を画面全体に広げる
             self.update();
         };
 
@@ -299,6 +283,15 @@
         // ファイルツリー情報をセット
         store.on(store.CHANGE.TREE_LOADED, function(store){
             self.tree = store.tree;
+
+            // 初期サイズ
+            let canvas = self.refs.canvas;
+            self.BASE_SIZE = [canvas.offsetWidth*0.7, canvas.offsetWidth*0.7/16*9];
+            // 初期座標を中央に設定（マイナス値）
+            self.viewPoint = [
+                -(canvas.offsetWidth - self.BASE_SIZE[0]) / 2,
+                -(canvas.offsetHeight - self.BASE_SIZE[1]) / 2
+            ];
             self.draw();
         });
 
