@@ -58,6 +58,52 @@
             canvas.onmouseup = self.onMouseUp;
             canvas.onmouseleave = self.onMouseUp;
 
+            // キーボード
+            document.onkeydown = function(e) {
+                if (!self.tree) {
+                    return;
+                }
+                let key = e.key;
+
+                // These keys are valid when a command palette is not opened.
+                if (key == "ArrowUp") {
+                    if (e.ctrlKey) {
+                        self.startZoom(true, canvas.offsetWidth / 2, canvas.offsetHeight / 2);
+                    }
+                    else {
+                        self.viewPoint[1] -= 50;
+                        self.draw();
+                    }
+                }
+                else if (key == "ArrowDown") {
+                    if (e.ctrlKey) {
+                        self.startZoom(false, canvas.offsetWidth / 2, canvas.offsetHeight / 2);
+                    }
+                    else {
+                        self.viewPoint[1] += 50;
+                        self.draw();
+                    }
+                }
+                else if (key == "ArrowLeft") {
+                    self.viewPoint[0] -= 50;
+                    self.draw();
+                }
+                else if (key == "ArrowRight") {
+                    self.viewPoint[0] += 50;
+                    self.draw();
+                }
+                else if (key == "+") {
+                    self.startZoom(true, canvas.offsetWidth / 2, canvas.offsetHeight / 2);
+                }
+                else if (key == "-") {
+                    self.startZoom(false, canvas.offsetWidth / 2, canvas.offsetHeight / 2);
+                }
+                
+                //console.log(key);
+            };
+
+
+
             // 背景を更新
             self.update();
         };
