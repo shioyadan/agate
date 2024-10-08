@@ -213,8 +213,12 @@
 
             document.ondrop = (e) => {
                 e.preventDefault(); // イベントの伝搬を止めて、アプリケーションのHTMLとファイルが差し替わらないようにする
+
+                // Due to the removal of the 'path' attribute in Electron, webUtils is used.
+                // https://www.electronjs.org/docs/latest/api/web-utils
+                const { webUtils } = require("electron");   
                 for (let file of e.dataTransfer.files) {
-                    store.trigger(store.ACTION.TREE_IMPORT, file.name);
+                    store.trigger(store.ACTION.TREE_IMPORT, webUtils.getPathForFile(file));
                 }
             };
 
