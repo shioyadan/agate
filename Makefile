@@ -14,6 +14,7 @@ build: clean
 		--electron-version=27.0.3 \
 		--ignore work \
 		--ignore packaging-work \
+		--ignore docker \
 		--ignore "\\.vscode$$" \
 		--ignore "\\.log$$" \
 		--ignore "\\.gz$$" \
@@ -46,3 +47,10 @@ clean:
 distclean: clean
 	rm node_modules -r -f
 
+
+
+docker-run:
+	./docker/run.sh
+
+docker-build:
+	cd docker; make docker-build
