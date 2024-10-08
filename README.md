@@ -28,14 +28,20 @@
 
 ## 開発
 
-    # Install node.js/npm
-    sudo apt install nodejs
+```bash
+# Install node.js/npm
+sudo apt install nodejs
 
-    # Run and build
-    make init   # Setup libraries
-    make        # Run agate
-    make pack   # Build & pack Agate for Windows/Linux/Mac
+# Run and build
+make init   # Setup libraries
+make        # Run agate
+make pack   # Build & pack Agate for Windows/Linux/Mac
 
+# Docker 環境を使用する場合
+make docker-build
+./docker/run.sh make init
+./docker/run.sh make
+```
 
 ## その他
 
@@ -44,7 +50,7 @@ agate は瑪瑙の意味．
 
 ## License
 
-Copyright (C) 2016-2023 Ryota Shioya <shioya@ci.i.u-tokyo.ac.jp>
+Copyright (C) 2016-2024 Ryota Shioya <shioya@ci.i.u-tokyo.ac.jp>
 
 This application is released under the 3-Clause BSD License, see LICENSE.md.
 This application bundles ELECTRON and many third-party packages in accordance with the licenses presented in THIRD-PARTY-LICENSES.md.

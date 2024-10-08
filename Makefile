@@ -1,5 +1,5 @@
 run:
-	npx electron . 
+	npx electron . --no-sandbox
 
 init:
 	npm install
@@ -11,7 +11,7 @@ build: clean
 		--out=packaging-work \
 		--platform=darwin,win32,linux \
 		--arch=x64  \
-		--electron-version=27.0.3 \
+		--electron-version=32.1.2 \
 		--ignore work \
 		--ignore packaging-work \
 		--ignore docker \
