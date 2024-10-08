@@ -204,6 +204,20 @@
 
             // 一回開く
             //store.trigger(store.ACTION.FOLDER_OPEN);
+
+            // ドラッグアンドドロップ
+            document.ondragover = (e) => {
+                e.preventDefault(); // イベントの伝搬を止めて、アプリケーションのHTMLとファイルが差し替わらないようにする
+                return false;
+            };
+
+            document.ondrop = (e) => {
+                e.preventDefault(); // イベントの伝搬を止めて、アプリケーションのHTMLとファイルが差し替わらないようにする
+                for (let file of e.dataTransfer.files) {
+                    store.trigger(store.ACTION.TREE_IMPORT, file.name);
+                }
+            };
+
         };
 
         // 読み込み終了時
