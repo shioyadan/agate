@@ -51,6 +51,19 @@
 
             self.BASE_SIZE = [canvas.height*16/9, canvas.height];
 
+            let navbar = document.getElementById("id_app_navbar");
+            let navbarHeight = navbar ? navbar.offsetHeight : 0;
+            let statusBar = document.getElementById("id_status_bar");
+            let statusBarHeight = statusBar ? statusBar.offsetHeight : 0;
+
+            // 初期座標を中央に設定（マイナス値）
+            self.viewPoint = [
+                -(document.body.offsetWidth - self.BASE_SIZE[0])/2,
+                -(document.body.offsetHeight -
+                  navbarHeight - statusBarHeight -
+                  self.BASE_SIZE[1]) / 2
+            ];
+
             canvas.ondblclick = self.onMouseDoubleClick;
             canvas.onmousewheel = self.onMouseWheel;
             canvas.onmousemove = self.onMouseMove;
