@@ -35,6 +35,10 @@
                         <span class="glyphicon glyphicon-zoom-out"></span> 
                         Zoom out
                     </a></li>
+                    <li><a href="#home" onclick={onClickFitToCanvas}>
+                        <span class="glyphicon glyphicon-fullscreen"></span>
+                        Fit to window
+                    </a></li>
 
                     <li><a href="#home" onclick={onClickFileSize}>
                         <span class={"glyphicon " + (fileSize ? "glyphicon-check" : "glyphicon-unchecked")}></span> 
@@ -78,6 +82,10 @@
         self.onClickZoomOut = function() {
             self.closeDropDown();   // Close the list after click
             store.trigger(store.ACTION.CANVAS_ZOOM_OUT);
+        };
+        self.onClickFitToCanvas = function() {
+            self.closeDropDown();   // Close the list after click
+            store.trigger(store.ACTION.FIT_TO_CANVAS);
         };
 
         self.onClickFileSize = function() {

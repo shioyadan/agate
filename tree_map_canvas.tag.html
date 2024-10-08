@@ -218,6 +218,22 @@
             }
         };
 
+        self.fitToCanvas = function(){
+            let canvas = self.refs.canvas;
+
+            let targetScale = Math.min(
+                canvas.offsetWidth / self.BASE_SIZE[0],
+                canvas.offsetHeight / self.BASE_SIZE[1]
+            );
+
+            self.zoomLevel = Math.log2(targetScale);
+            self.viewPoint = [
+                -(canvas.offsetWidth - (self.BASE_SIZE[0]*targetScale)) / 2,
+                -(canvas.offsetHeight - (self.BASE_SIZE[1]*targetScale)) / 2
+            ];
+            self.draw();
+        };
+
         // offsetX/offsetY を基準に，newZoomLevel を適用
         self.setZoomLevel = function(newZoomLevel, offsetX, offsetY){
             let newZoomRatio = self.calcZoomRatio(newZoomLevel);
@@ -314,6 +330,9 @@
         });
         store.on(store.CHANGE.CANVAS_ZOOM_OUT, function(){
             self.startZoom(false, self.width / 2, self.height / 2);
+        });
+        store.on(store.CHANGE.FIT_TO_CANVAS, function(){
+            self.fitToCanvas();
         });
 
         // エントリポイント
