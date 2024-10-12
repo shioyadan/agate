@@ -10,7 +10,8 @@ class TreeMapRenderer {
         // 各タイルの中の子タイルへのマージン
         // rect の各方向に足される
         this.TILE_MARGIN = [8, 8 + this.FONT_SIZE, -8, -8];
-    
+
+        this.pointedFileNode = null;
         this.treeMap_ = new TreeMap();
     }
 
@@ -101,6 +102,19 @@ class TreeMapRenderer {
             }
             c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
         }
+
+        // ポインタが指しているファイルをハイライト
+        // ループが異なるのは描画を上書きされないようにするため
+        for (let a of areas) {
+            if (a.fileNode == this.pointedFileNode) {
+                c.lineWidth = 2; 
+                c.strokeStyle = "rgb(255,255,255)";
+                let rect = a.rect;
+                c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
+                break;
+            }
+        }
+
 
         function fileNodeToStr(fileNode) {
             let str = "";
