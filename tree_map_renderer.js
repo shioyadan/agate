@@ -105,10 +105,11 @@ class TreeMapRenderer {
 
         // ポインタが指しているファイルをハイライト
         // ループが異なるのは描画を上書きされないようにするため
+        c.lineWidth = 5; 
         for (let a of areas) {
             if (a.fileNode == this.pointedFileNode) {
-                c.lineWidth = 2; 
-                c.strokeStyle = "rgb(255,255,255)";
+                // c.strokeStyle = "rgb(230,230,250)";
+                c.strokeStyle = strokeStyle[a.level];
                 let rect = a.rect;
                 c.strokeRect(rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]);
                 break;
