@@ -32,8 +32,8 @@ app.on("window-all-closed", function() {
 app.on("ready", function() {
     // Create the browser window.
     mainWindow = new BrowserWindow({
-        width: 800, 
-        height: 600,
+        width: 1024, 
+        height: 768,
 
         // The window is initially hidden and 
         // is activate in an initial handler in <app> in app.tag.html
